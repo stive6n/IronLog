@@ -102,6 +102,7 @@ const IcoCalendar= ({s=16}) => React.createElement('svg',{width:s,height:s,viewB
 const IcoTrophy  = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M8 21h8'}),React.createElement('path',{d:'M12 17v4'}),React.createElement('path',{d:'M7 4h10v5a5 5 0 0 1-10 0V4z'}),React.createElement('path',{d:'M17 5h3a2 2 0 0 1-2 4h-1'}),React.createElement('path',{d:'M7 5H4a2 2 0 0 0 2 4h1'}));
 const IcoFlame   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 2c-1 3-5 6-5 11a5 5 0 0 0 10 0c0-1.5-.6-2.5-1.2-3.3.1 1.6-.8 2.3-.8 2.3.3-2.8-1.8-4.7-3-7z'}));
 const IcoRuler   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M3 17l14-14 4 4-14 14H3v-4z'}),React.createElement('line',{x1:14.5,y1:5.5,x2:17.5,y2:8.5}),React.createElement('line',{x1:11,y1:9,x2:13,y2:11}),React.createElement('line',{x1:7.5,y1:12.5,x2:9.5,y2:14.5}));
+const IcoApple   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 6c-3.5-2-8-1-8 4.5C4 16 8 21 11 21c1 0 1-.5 1-.5s0 .5 1 .5c3 0 7-5 7-10.5C20 5 15.5 4 12 6z'}),React.createElement('path',{d:'M12 6c0-1.5.5-3 2-4'}));
  
 function SvgLineChart({data}){
   if(!data||data.length<2)return null;
@@ -174,7 +175,163 @@ function sessionTopWeight(sets) {
     return max;
 }
 function emptyState() {
-    return { days: [], history: [], measurements: [] };
+    return { days: [], history: [], measurements: [], diet: emptyDiet() };
+}
+// ── Modulo alimentazione ─────────────────────────────────────────────
+const WEEKDAYS = [
+    { key: "mon", label: "Lunedì", short: "Lun" },
+    { key: "tue", label: "Martedì", short: "Mar" },
+    { key: "wed", label: "Mercoledì", short: "Mer" },
+    { key: "thu", label: "Giovedì", short: "Gio" },
+    { key: "fri", label: "Venerdì", short: "Ven" },
+    { key: "sat", label: "Sabato", short: "Sab" },
+    { key: "sun", label: "Domenica", short: "Dom" },
+];
+function emptyDiet() {
+    const manualMacros = {};
+    WEEKDAYS.forEach((w) => { manualMacros[w.key] = { p: "", c: "", f: "" }; });
+    return {
+        mode: "auto",
+        profile: { heightCm: "", weightKg: "", bfPercent: "", activity: "moderato", goal: "mantenimento" },
+        trainingDays: { mon: true, tue: false, wed: true, thu: false, fri: true, sat: false, sun: false },
+        manualMacros,
+    };
+}
+function computeAutoDietTargets(profile) {
+    const weight = parseFloat(String(profile.weightKg).replace(",", "."));
+    const bf = parseFloat(String(profile.bfPercent).replace(",", "."));
+    if (isNaN(weight) || isNaN(bf) || weight <= 0 || bf <= 0 || bf >= 70)
+        return null;
+    const leanMass = weight * (1 - bf / 100);
+    const bmr = 370 + 21.6 * leanMass;
+    const activityMultipliers = { sedentario: 1.3, moderato: 1.5, attivo: 1.7 };
+    const tdee = bmr * (activityMultipliers[profile.activity] || 1.5);
+    const goalMultipliers = { dimagrimento: 0.8, mantenimento: 1, aumento: 1.1 };
+    const baseKcal = tdee * (goalMultipliers[profile.goal] || 1);
+    const trainingKcal = Math.round(baseKcal + 150);
+    const restKcal = Math.round(baseKcal - 150);
+    const proteinG = Math.round(weight * 2);
+    const fatG = Math.round(weight * 0.8);
+    const proteinKcal = proteinG * 4;
+    const fatKcal = fatG * 9;
+    const trainingCarbsG = Math.max(0, Math.round((trainingKcal - proteinKcal - fatKcal) / 4));
+    const restCarbsG = Math.max(0, Math.round((restKcal - proteinKcal - fatKcal) / 4));
+    return {
+        bmr: Math.round(bmr),
+        tdee: Math.round(tdee),
+        training: { kcal: trainingKcal, p: proteinG, c: trainingCarbsG, f: fatG },
+        rest: { kcal: restKcal, p: proteinG, c: restCarbsG, f: fatG },
+    };
+}
+function getWeekDietTargets(diet) {
+    if (diet.mode === "auto") {
+        const auto = computeAutoDietTargets(diet.profile);
+        return WEEKDAYS.map((w) => {
+            const isTraining = !!diet.trainingDays[w.key];
+            const t = auto ? (isTraining ? auto.training : auto.rest) : null;
+            return { key: w.key, label: w.short, isTraining, kcal: t ? t.kcal : null, p: t ? t.p : null, c: t ? t.c : null, f: t ? t.f : null };
+        });
+    }
+    return WEEKDAYS.map((w) => {
+        const m = diet.manualMacros[w.key] || { p: "", c: "", f: "" };
+        const hasData = String(m.p).trim() !== "" || String(m.c).trim() !== "" || String(m.f).trim() !== "";
+        const p = parseFloat(String(m.p).replace(",", ".")) || 0;
+        const c = parseFloat(String(m.c).replace(",", ".")) || 0;
+        const f = parseFloat(String(m.f).replace(",", ".")) || 0;
+        return { key: w.key, label: w.short, isTraining: null, kcal: hasData ? Math.round(p * 4 + c * 4 + f * 9) : null, p: hasData ? p : null, c: hasData ? c : null, f: hasData ? f : null };
+    });
+}
+// ── Creazione automatica scheda ────────────────────────────────────────
+const MUSCLE_GROUPS = {
+    chest: "Petto", back: "Dorso", shoulders: "Spalle", biceps: "Bicipiti", triceps: "Tricipiti",
+    quads: "Quadricipiti", hamstrings: "Femorali", glutes: "Glutei", calves: "Polpacci", core: "Core",
+};
+const EXERCISE_POOL = {
+    chest: ["Panca piana bilanciere", "Panca inclinata manubri", "Croci ai cavi", "Chest press macchina", "Piegamenti (push-up)"],
+    back: ["Trazioni alla sbarra", "Rematore bilanciere", "Lat machine avanti", "Pulley basso", "Rematore con manubrio"],
+    shoulders: ["Military press bilanciere", "Alzate laterali manubri", "Alzate posteriori ai cavi", "Arnold press manubri"],
+    biceps: ["Curl bilanciere", "Curl manubri alternato", "Curl a martello", "Curl ai cavi"],
+    triceps: ["French press bilanciere", "Push down ai cavi", "Dip alle parallele", "Estensioni sopra la testa"],
+    quads: ["Squat bilanciere", "Leg press", "Affondi con manubri", "Leg extension", "Squat bulgaro"],
+    hamstrings: ["Stacco rumeno", "Leg curl sdraiato", "Good morning", "Stacco a gambe tese"],
+    glutes: ["Hip thrust bilanciere", "Affondi bulgari", "Abduttori ai cavi"],
+    calves: ["Calf raise in piedi", "Calf raise seduto"],
+    core: ["Plank", "Crunch ai cavi", "Russian twist", "Sollevamento gambe"],
+};
+const SPLIT_TEMPLATES = {
+    1: [
+        { name: "Full Body", blocks: [["chest", 2], ["back", 2], ["quads", 1], ["shoulders", 1], ["hamstrings", 1], ["core", 1]] },
+    ],
+    2: [
+        { name: "Full Body A", blocks: [["chest", 2], ["back", 1], ["quads", 2], ["shoulders", 1], ["core", 1]] },
+        { name: "Full Body B", blocks: [["back", 2], ["chest", 1], ["hamstrings", 2], ["shoulders", 1], ["core", 1]] },
+    ],
+    3: [
+        { name: "Spinta (Push)", blocks: [["chest", 3], ["shoulders", 2], ["triceps", 2]] },
+        { name: "Trazione (Pull)", blocks: [["back", 3], ["biceps", 2], ["core", 1]] },
+        { name: "Gambe (Legs)", blocks: [["quads", 2], ["hamstrings", 2], ["glutes", 1], ["calves", 1], ["core", 1]] },
+    ],
+    4: [
+        { name: "Parte superiore A", blocks: [["chest", 2], ["back", 2], ["shoulders", 1], ["triceps", 1]] },
+        { name: "Parte inferiore A", blocks: [["quads", 2], ["hamstrings", 1], ["glutes", 1], ["calves", 1], ["core", 1]] },
+        { name: "Parte superiore B", blocks: [["back", 2], ["chest", 1], ["shoulders", 2], ["biceps", 1]] },
+        { name: "Parte inferiore B", blocks: [["hamstrings", 2], ["quads", 1], ["glutes", 1], ["calves", 1], ["core", 1]] },
+    ],
+    5: [
+        { name: "Spinta (Push)", blocks: [["chest", 3], ["shoulders", 2], ["triceps", 2]] },
+        { name: "Trazione (Pull)", blocks: [["back", 3], ["biceps", 2], ["core", 1]] },
+        { name: "Gambe (Legs)", blocks: [["quads", 2], ["hamstrings", 2], ["glutes", 1], ["calves", 1]] },
+        { name: "Parte superiore", blocks: [["chest", 1], ["back", 1], ["shoulders", 2], ["biceps", 1], ["triceps", 1]] },
+        { name: "Parte inferiore", blocks: [["quads", 2], ["hamstrings", 1], ["glutes", 1], ["calves", 1], ["core", 1]] },
+    ],
+    6: [
+        { name: "Spinta A (Push)", blocks: [["chest", 3], ["shoulders", 2], ["triceps", 2]] },
+        { name: "Trazione A (Pull)", blocks: [["back", 3], ["biceps", 2], ["core", 1]] },
+        { name: "Gambe A (Legs)", blocks: [["quads", 2], ["hamstrings", 2], ["glutes", 1], ["calves", 1]] },
+        { name: "Spinta B (Push)", blocks: [["chest", 3], ["shoulders", 2], ["triceps", 2]] },
+        { name: "Trazione B (Pull)", blocks: [["back", 3], ["biceps", 2], ["core", 1]] },
+        { name: "Gambe B (Legs)", blocks: [["quads", 2], ["hamstrings", 2], ["glutes", 1], ["calves", 1]] },
+    ],
+    7: [
+        { name: "Spinta A (Push)", blocks: [["chest", 3], ["shoulders", 2], ["triceps", 2]] },
+        { name: "Trazione A (Pull)", blocks: [["back", 3], ["biceps", 2], ["core", 1]] },
+        { name: "Gambe A (Legs)", blocks: [["quads", 2], ["hamstrings", 2], ["glutes", 1], ["calves", 1]] },
+        { name: "Spinta B (Push)", blocks: [["chest", 3], ["shoulders", 2], ["triceps", 2]] },
+        { name: "Trazione B (Pull)", blocks: [["back", 3], ["biceps", 2], ["core", 1]] },
+        { name: "Gambe B (Legs)", blocks: [["quads", 2], ["hamstrings", 2], ["glutes", 1], ["calves", 1]] },
+        { name: "Core & Mobilità", blocks: [["core", 3], ["calves", 1], ["shoulders", 1], ["hamstrings", 1]] },
+    ],
+};
+function pickExercises(pool, count, counters, key) {
+    if (counters[key] == null)
+        counters[key] = 0;
+    const start = counters[key];
+    const list = [];
+    for (let i = 0; i < count; i++) {
+        list.push(pool[(start + i) % pool.length]);
+    }
+    counters[key] = (start + count) % pool.length;
+    return list;
+}
+function generateSplitDays(dayCount) {
+    const templates = SPLIT_TEMPLATES[dayCount] || SPLIT_TEMPLATES[3];
+    const counters = {};
+    return templates.map((t) => {
+        const exercises = [];
+        t.blocks.forEach(([group, count]) => {
+            const picks = pickExercises(EXERCISE_POOL[group], count, counters, group);
+            picks.forEach((name) => {
+                exercises.push({ id: uid(), name, sets: [], targetSets: "3", targetReps: "10", description: MUSCLE_GROUPS[group] });
+            });
+        });
+        return { id: uid(), name: t.name, exercises: exercises.slice(0, MAX_EXERCISES) };
+    });
+}
+function summarizeGroups(exercises) {
+    const seen = [];
+    exercises.forEach((e) => { if (e.description && seen.indexOf(e.description) === -1)
+        seen.push(e.description); });
+    return seen.join(", ");
 }
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -883,6 +1040,52 @@ const CSS = `
   font-family: var(--font-mono);
   font-size: 11px;
 }
+ 
+/* ── Modulo alimentazione ─────────────────────────────────────────── */
+.ironlog .diet-kcal {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ironlog .diet-day-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 3px 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.ironlog .diet-day-tag.training { color: var(--accent); border-color: var(--accent); }
+.ironlog .weekday-row { display: flex; gap: 6px; margin-top: 8px; }
+.ironlog .weekday-chip {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 10px 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ironlog .weekday-chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.ironlog .diet-manual-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.ironlog .diet-manual-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ironlog .measure-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 `;
 function emptyDayDraftName(n) {
     return "";
@@ -921,9 +1124,18 @@ function App() {
     const [statsTab, setStatsTab] = useState("heatmap");
     const [selectedHeatKey, setSelectedHeatKey] = useState(null);
     const [addingMeasurement, setAddingMeasurement] = useState(false);
-    const [measureDraft, setMeasureDraft] = useState({ weight: "", chest: "", waist: "", hips: "", arm: "" });
+    const [measureDraft, setMeasureDraft] = useState({ weight: "", chest: "", waist: "", hips: "", arm: "", bf: "" });
     const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState(null);
     const [measureChartField, setMeasureChartField] = useState("weight");
+    // ── Modulo alimentazione ─────────────────────────────────────────
+    const [dietSettingsMode, setDietSettingsMode] = useState("auto");
+    const [dietProfileDraft, setDietProfileDraft] = useState(null);
+    const [dietTrainingDraft, setDietTrainingDraft] = useState(null);
+    const [dietManualDraft, setDietManualDraft] = useState(null);
+    const [dietChartField, setDietChartField] = useState("weight");
+    // ── Creazione automatica scheda ───────────────────────────────────
+    const [splitDayCount, setSplitDayCount] = useState(3);
+    const [confirmApplySplit, setConfirmApplySplit] = useState(false);
     // ── Session timers & checkboxes ─────────────────────────────────
     const [sessionStartTime, setSessionStartTime] = useState(null);
     const [sessionElapsed, setSessionElapsed] = useState(0);
@@ -941,12 +1153,12 @@ function App() {
                 ]);
                 if (dataRes && dataRes.value) {
                     const parsed = JSON.parse(dataRes.value);
-                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [] });
+                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet || emptyDiet() });
                 }
                 if (navRes && navRes.value) {
                     const nav = JSON.parse(navRes.value);
                     if (nav.screen)
-                        setScreen(nav.screen);
+                        setScreen(nav.screen === "dietSettings" ? "diet" : nav.screen);
                     if (nav.tab)
                         setTab(nav.tab);
                     if (nav.dayId)
@@ -1008,6 +1220,7 @@ function App() {
     const days = appState.days;
     const history = appState.history;
     const measurements = appState.measurements || [];
+    const diet = appState.diet || emptyDiet();
     const currentDay = days.find((d) => d.id === dayId) || null;
     const currentExercise = currentDay ? currentDay.exercises.find((e) => e.id === exerciseId) : null;
     const currentHistory = history.find((h) => h.id === historyId) || null;
@@ -1314,7 +1527,7 @@ function App() {
     // ── Misure corporee ──────────────────────────────────────────────
     function addMeasurement() {
         const d = measureDraft;
-        if (!d.weight.trim() && !d.chest.trim() && !d.waist.trim() && !d.hips.trim() && !d.arm.trim())
+        if (!d.weight.trim() && !d.chest.trim() && !d.waist.trim() && !d.hips.trim() && !d.arm.trim() && !d.bf.trim())
             return;
         const entry = {
             id: uid(),
@@ -1324,9 +1537,10 @@ function App() {
             waist: d.waist.trim(),
             hips: d.hips.trim(),
             arm: d.arm.trim(),
+            bf: d.bf.trim(),
         };
         persist(Object.assign(Object.assign({}, appState), { measurements: [entry, ...measurements] }));
-        setMeasureDraft({ weight: "", chest: "", waist: "", hips: "", arm: "" });
+        setMeasureDraft({ weight: "", chest: "", waist: "", hips: "", arm: "", bf: "" });
         setAddingMeasurement(false);
     }
     function removeMeasurement(id) {
@@ -1336,6 +1550,58 @@ function App() {
     function openStats() {
         setScreen("stats");
         persistNav({ screen: "stats", tab });
+    }
+    // ── Modulo alimentazione ──────────────────────────────────────────
+    function openDiet() {
+        setScreen("diet");
+        persistNav({ screen: "diet", tab });
+    }
+    function openDietSettings() {
+        setDietSettingsMode(diet.mode || "auto");
+        setDietProfileDraft(Object.assign({}, diet.profile));
+        setDietTrainingDraft(Object.assign({}, diet.trainingDays));
+        setDietManualDraft(JSON.parse(JSON.stringify(diet.manualMacros)));
+        setScreen("dietSettings");
+        persistNav({ screen: "dietSettings", tab });
+    }
+    function toggleTrainingDay(key) {
+        setDietTrainingDraft(Object.assign(Object.assign({}, dietTrainingDraft), { [key]: !dietTrainingDraft[key] }));
+    }
+    function updateManualDraft(key, field, value) {
+        setDietManualDraft(Object.assign(Object.assign({}, dietManualDraft), { [key]: Object.assign(Object.assign({}, dietManualDraft[key]), { [field]: value }) }));
+    }
+    function saveDietSettings() {
+        const nextDiet = {
+            mode: dietSettingsMode,
+            profile: dietProfileDraft,
+            trainingDays: dietTrainingDraft,
+            manualMacros: dietManualDraft,
+        };
+        let nextMeasurements = measurements;
+        if (dietSettingsMode === "auto") {
+            const w = String(dietProfileDraft.weightKg || "").trim();
+            const bf = String(dietProfileDraft.bfPercent || "").trim();
+            if (w || bf) {
+                nextMeasurements = [{ id: uid(), date: new Date().toISOString(), weight: w, chest: "", waist: "", hips: "", arm: "", bf: bf }, ...measurements];
+            }
+        }
+        persist(Object.assign(Object.assign({}, appState), { diet: nextDiet, measurements: nextMeasurements }));
+        setScreen("diet");
+        persistNav({ screen: "diet", tab });
+    }
+    // ── Creazione automatica scheda ────────────────────────────────────
+    function openAutoSplit() {
+        setSplitDayCount(Math.min(Math.max(days.length || 3, 1), 7));
+        setConfirmApplySplit(false);
+        setScreen("autoSplit");
+        persistNav({ screen: "autoSplit", tab });
+    }
+    function applyGeneratedSplit(dayCount, mode) {
+        const generated = generateSplitDays(dayCount);
+        const nextDays = mode === "replace" ? generated : [...days, ...generated.slice(0, Math.max(0, MAX_DAYS - days.length))];
+        persist(Object.assign(Object.assign({}, appState), { days: nextDays }));
+        setConfirmApplySplit(false);
+        goHome("todo");
     }
     function completeSession() {
         if (!currentDay)
@@ -1462,6 +1728,9 @@ function App() {
     }
     function renderHomeManage() {
         return (React.createElement("div", { className: "content" },
+            React.createElement("button", { className: "btn primary full", style: { marginBottom: 14 }, onClick: openAutoSplit },
+                React.createElement(IcoPlus, { size: 16 }),
+                " Crea scheda automatica"),
             React.createElement("div", { className: "mgmt-data-actions" },
                 React.createElement("button", { className: "btn full", onClick: exportData },
                     React.createElement(IcoDownload, { size: 16 }),
@@ -1580,8 +1849,11 @@ function App() {
         return (React.createElement(React.Fragment, null,
             React.createElement("div", { className: "masthead masthead-row" },
                 React.createElement("div", { className: "masthead-title" }, "Allenamenti"),
-                React.createElement("button", { className: "icon-btn", "aria-label": "Statistiche", onClick: openStats },
-                    React.createElement(IcoCalendar, { size: 18 }))),
+                React.createElement("div", { style: { display: "flex", gap: 8 } },
+                    React.createElement("button", { className: "icon-btn", "aria-label": "Alimentazione", onClick: openDiet },
+                        React.createElement(IcoApple, { size: 18 })),
+                    React.createElement("button", { className: "icon-btn", "aria-label": "Statistiche", onClick: openStats },
+                        React.createElement(IcoCalendar, { size: 18 })))),
             React.createElement("div", { className: "tab-row" },
                 React.createElement("button", { className: "tab-btn" + (tab === "todo" ? " active" : ""), onClick: () => setTab("todo") }, "Da fare"),
                 React.createElement("button", { className: "tab-btn" + (tab === "past" ? " active" : ""), onClick: () => setTab("past") }, "Passati"),
@@ -1921,6 +2193,7 @@ function App() {
         const sorted = [...measurements].sort((a, b) => new Date(b.date) - new Date(a.date));
         const chartFields = [
             { key: "weight", label: "Peso" },
+            { key: "bf", label: "BF %" },
             { key: "chest", label: "Torace" },
             { key: "waist", label: "Vita" },
             { key: "hips", label: "Fianchi" },
@@ -1938,12 +2211,13 @@ function App() {
                     React.createElement("span", { className: "eyebrow" }, "Peso (kg)"),
                     React.createElement("input", { className: "input-text", autoFocus: true, inputMode: "decimal", placeholder: "es. 78.5", value: measureDraft.weight, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { weight: e.target.value })) })),
                 React.createElement("div", { className: "measure-grid" },
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "BF stimata (%)", value: measureDraft.bf, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { bf: e.target.value })) }),
                     React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Torace (cm)", value: measureDraft.chest, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { chest: e.target.value })) }),
                     React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Vita (cm)", value: measureDraft.waist, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { waist: e.target.value })) }),
                     React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Fianchi (cm)", value: measureDraft.hips, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { hips: e.target.value })) }),
                     React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Braccio (cm)", value: measureDraft.arm, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { arm: e.target.value })) })),
                 React.createElement("div", { className: "form-actions" },
-                    React.createElement("button", { className: "btn ghost", onClick: () => { setAddingMeasurement(false); setMeasureDraft({ weight: "", chest: "", waist: "", hips: "", arm: "" }); } }, "Annulla"),
+                    React.createElement("button", { className: "btn ghost", onClick: () => { setAddingMeasurement(false); setMeasureDraft({ weight: "", chest: "", waist: "", hips: "", arm: "", bf: "" }); } }, "Annulla"),
                     React.createElement("button", { className: "btn primary", onClick: addMeasurement }, "Salva")))),
             chartData.length >= 2 && (React.createElement("div", { className: "compare-card", style: { marginTop: 14 } },
                 React.createElement("div", { className: "compare-head" },
@@ -1955,6 +2229,7 @@ function App() {
     }
     function renderMeasurementRow(m) {
         const subParts = [
+            m.bf && `BF ${m.bf}%`,
             m.chest && `Torace ${m.chest}cm`,
             m.waist && `Vita ${m.waist}cm`,
             m.hips && `Fianchi ${m.hips}cm`,
@@ -1976,6 +2251,114 @@ function App() {
             return React.createElement("div", { className: "empty-state" }, "Nessuna misurazione salvata ancora.");
         }
         return React.createElement("div", { className: "list" }, sorted.map((m) => renderMeasurementRow(m)));
+    }
+    // ── Modulo alimentazione ──────────────────────────────────────────
+    function renderDiet() {
+        const week = getWeekDietTargets(diet);
+        const hasAnyData = week.some((d) => d.kcal !== null);
+        const chartFieldsDiet = [{ key: "weight", label: "Peso" }, { key: "bf", label: "BF %" }];
+        const chartData = [...measurements]
+            .filter((m) => String(m[dietChartField] || "").trim() !== "")
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .map((m) => ({ label: formatShortDate(m.date), weight: parseFloat(String(m[dietChartField]).replace(",", ".")) }))
+            .filter((d) => !isNaN(d.weight));
+        return (React.createElement(React.Fragment, null,
+            React.createElement(Header, { title: "Alimentazione", onBack: () => goHome(tab) }),
+            React.createElement("div", { className: "content" },
+                React.createElement("button", { className: "btn primary full", style: { marginBottom: 16 }, onClick: openDietSettings }, "Imposta dieta"),
+                !hasAnyData && (React.createElement("div", { className: "empty-state" },
+                    "Nessun piano impostato ancora.",
+                    React.createElement("br", null),
+                    "Premi \u201CImposta dieta\u201D per iniziare.")),
+                hasAnyData && (React.createElement("div", { className: "list" }, week.map((d) => (React.createElement("div", { className: "row-card", key: d.key },
+                    React.createElement("div", { className: "row-main" },
+                        React.createElement("div", { className: "row-title" }, d.label),
+                        React.createElement("div", { className: "row-sub" }, d.kcal !== null ? `${d.p}g P \u00B7 ${d.c}g C \u00B7 ${d.f}g G` : "Non impostato")),
+                    d.isTraining !== null && d.kcal !== null && (React.createElement("span", { className: "diet-day-tag" + (d.isTraining ? " training" : "") }, d.isTraining ? "Allenamento" : "Riposo")),
+                    React.createElement("div", { className: "diet-kcal" }, d.kcal !== null ? d.kcal : "\u2014")))))),
+                React.createElement("div", { className: "section-label", style: { marginTop: 20 } }, "Andamento peso / BF"),
+                chartData.length >= 2 ? (React.createElement("div", { className: "compare-card" },
+                    React.createElement("div", { className: "compare-head" },
+                        React.createElement("span", { className: "lbl" }, "Storico"),
+                        React.createElement("select", { className: "measure-select", value: dietChartField, onChange: (e) => setDietChartField(e.target.value) }, chartFieldsDiet.map((f) => React.createElement("option", { key: f.key, value: f.key }, f.label)))),
+                    React.createElement(SvgLineChart, { data: chartData }))) : (React.createElement("div", { className: "empty-state" }, "Registra peso e BF% almeno due volte (da \u201CImposta dieta\u201D o dalle Misure) per vedere il grafico.")))));
+    }
+    function renderDietAutoForm(auto) {
+        return (React.createElement(React.Fragment, null,
+            React.createElement("div", { className: "section-label" }, "Dati corporei"),
+            React.createElement("div", { className: "measure-grid" },
+                React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Altezza (cm)", value: dietProfileDraft.heightCm, onChange: (e) => setDietProfileDraft(Object.assign(Object.assign({}, dietProfileDraft), { heightCm: e.target.value })) }),
+                React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Peso (kg)", value: dietProfileDraft.weightKg, onChange: (e) => setDietProfileDraft(Object.assign(Object.assign({}, dietProfileDraft), { weightKg: e.target.value })) }),
+                React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "BF stimata (%)", value: dietProfileDraft.bfPercent, onChange: (e) => setDietProfileDraft(Object.assign(Object.assign({}, dietProfileDraft), { bfPercent: e.target.value })) })),
+            React.createElement("div", { className: "section-label" }, "Livello di attivit\u00E0"),
+            React.createElement("select", { className: "measure-select", style: { width: "100%", padding: "11px 12px", fontSize: 14 }, value: dietProfileDraft.activity, onChange: (e) => setDietProfileDraft(Object.assign(Object.assign({}, dietProfileDraft), { activity: e.target.value })) },
+                React.createElement("option", { value: "sedentario" }, "Sedentario / poco attivo"),
+                React.createElement("option", { value: "moderato" }, "Moderatamente attivo"),
+                React.createElement("option", { value: "attivo" }, "Molto attivo")),
+            React.createElement("div", { className: "section-label" }, "Obiettivo"),
+            React.createElement("select", { className: "measure-select", style: { width: "100%", padding: "11px 12px", fontSize: 14 }, value: dietProfileDraft.goal, onChange: (e) => setDietProfileDraft(Object.assign(Object.assign({}, dietProfileDraft), { goal: e.target.value })) },
+                React.createElement("option", { value: "dimagrimento" }, "Dimagrimento"),
+                React.createElement("option", { value: "mantenimento" }, "Mantenimento"),
+                React.createElement("option", { value: "aumento" }, "Aumento massa")),
+            React.createElement("div", { className: "section-label" }, "Giorni di allenamento"),
+            React.createElement("div", { className: "weekday-row" }, WEEKDAYS.map((w) => (React.createElement("button", { key: w.key, className: "weekday-chip" + (dietTrainingDraft[w.key] ? " active" : ""), onClick: () => toggleTrainingDay(w.key) }, w.short[0])))),
+            auto ? (React.createElement("div", { className: "compare-card", style: { marginTop: 16 } },
+                React.createElement("div", { className: "compare-head" }, React.createElement("span", { className: "lbl" }, "Anteprima")),
+                React.createElement("div", { className: "row-sub" }, `Allenamento: ${auto.training.kcal} kcal \u00B7 ${auto.training.p}P ${auto.training.c}C ${auto.training.f}G`),
+                React.createElement("div", { className: "row-sub", style: { marginTop: 4 } }, `Riposo: ${auto.rest.kcal} kcal \u00B7 ${auto.rest.p}P ${auto.rest.c}C ${auto.rest.f}G`))) : (React.createElement("div", { className: "hint", style: { marginTop: 14 } }, "Inserisci peso e BF% per vedere l'anteprima del piano."))));
+    }
+    function renderDietManualForm() {
+        return (React.createElement("div", { className: "list" }, WEEKDAYS.map((w) => {
+            const m = dietManualDraft[w.key];
+            const p = parseFloat(String(m.p).replace(",", ".")) || 0;
+            const c = parseFloat(String(m.c).replace(",", ".")) || 0;
+            const f = parseFloat(String(m.f).replace(",", ".")) || 0;
+            const kcal = Math.round(p * 4 + c * 4 + f * 9);
+            return React.createElement("div", { className: "diet-manual-row", key: w.key },
+                React.createElement("div", { className: "diet-manual-head" },
+                    React.createElement("span", { className: "row-title" }, w.label),
+                    React.createElement("span", { className: "diet-kcal" }, kcal > 0 ? `${kcal} kcal` : "\u2014")),
+                React.createElement("div", { className: "measure-grid-3" },
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Prot. g", value: m.p, onChange: (e) => updateManualDraft(w.key, "p", e.target.value) }),
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Carb. g", value: m.c, onChange: (e) => updateManualDraft(w.key, "c", e.target.value) }),
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Grassi g", value: m.f, onChange: (e) => updateManualDraft(w.key, "f", e.target.value) })));
+        })));
+    }
+    function renderDietSettings() {
+        if (!dietProfileDraft || !dietTrainingDraft || !dietManualDraft)
+            return null;
+        const auto = dietSettingsMode === "auto" ? computeAutoDietTargets(dietProfileDraft) : null;
+        return (React.createElement(React.Fragment, null,
+            React.createElement(Header, { title: "Imposta dieta", onBack: () => { setScreen("diet"); persistNav({ screen: "diet", tab }); } }),
+            React.createElement("div", { className: "content" },
+                React.createElement("div", { className: "tab-row" },
+                    React.createElement("button", { className: "tab-btn" + (dietSettingsMode === "auto" ? " active" : ""), onClick: () => setDietSettingsMode("auto") }, "Automatico"),
+                    React.createElement("button", { className: "tab-btn" + (dietSettingsMode === "manual" ? " active" : ""), onClick: () => setDietSettingsMode("manual") }, "Manuale")),
+                React.createElement("div", { style: { marginTop: 18 } }, dietSettingsMode === "auto" ? renderDietAutoForm(auto) : renderDietManualForm()),
+                React.createElement("button", { className: "btn primary full", style: { marginTop: 20 }, onClick: saveDietSettings }, "Salva"))));
+    }
+    // ── Creazione automatica scheda ────────────────────────────────────
+    function renderAutoSplit() {
+        const preview = generateSplitDays(splitDayCount);
+        const roomLeft = Math.max(0, MAX_DAYS - days.length);
+        return (React.createElement(React.Fragment, null,
+            React.createElement(Header, { title: "Crea scheda", onBack: () => goHome("manage") }),
+            React.createElement("div", { className: "content" },
+                React.createElement("div", { className: "section-label" }, "Quanti giorni a settimana vuoi allenarti?"),
+                React.createElement("div", { className: "weekday-row" }, [1, 2, 3, 4, 5, 6, 7].map((n) => (React.createElement("button", { key: n, className: "weekday-chip" + (splitDayCount === n ? " active" : ""), onClick: () => { setSplitDayCount(n); setConfirmApplySplit(false); } }, n)))),
+                React.createElement("div", { className: "section-label", style: { marginTop: 20 } }, "Anteprima split"),
+                React.createElement("div", { className: "list" }, preview.map((d, i) => (React.createElement("div", { className: "row-card", key: i },
+                    React.createElement("div", { className: "plate-badge sm" }, i + 1),
+                    React.createElement("div", { className: "row-main" },
+                        React.createElement("div", { className: "row-title" }, d.name),
+                        React.createElement("div", { className: "row-sub" }, d.exercises.length, " esercizi \u00B7 ", summarizeGroups(d.exercises))))))),
+                React.createElement("div", { className: "hint", style: { marginTop: 14 } }, "Dopo la creazione puoi rinominare i giorni e modificare, aggiungere o rimuovere esercizi come al solito."),
+                !confirmApplySplit ? (React.createElement("button", { className: "btn primary full", style: { marginTop: 10 }, onClick: () => setConfirmApplySplit(true) }, "Genera scheda")) : (React.createElement("div", { className: "add-form" },
+                    days.length > 0 && (React.createElement("div", { className: "row-sub" }, "Hai gi\u00E0 ", days.length, " giorni impostati.")),
+                    React.createElement("div", { className: "form-actions", style: { flexWrap: "wrap" } },
+                        React.createElement("button", { className: "btn ghost", onClick: () => setConfirmApplySplit(false) }, "Annulla"),
+                        days.length > 0 && roomLeft > 0 && (React.createElement("button", { className: "btn", onClick: () => applyGeneratedSplit(splitDayCount, "append") }, `Aggiungi (${Math.min(splitDayCount, roomLeft)} di ${splitDayCount})`)),
+                        React.createElement("button", { className: "btn danger", onClick: () => applyGeneratedSplit(splitDayCount, "replace") }, days.length > 0 ? "Sostituisci tutto" : "Crea scheda")))))));
     }
     function renderStats() {
         return (React.createElement(React.Fragment, null,
@@ -2003,7 +2386,13 @@ function App() {
         body = renderPastExercise();
     else if (screen === "stats")
         body = renderStats();
-    const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab].join("|");
+    else if (screen === "diet")
+        body = renderDiet();
+    else if (screen === "dietSettings")
+        body = renderDietSettings();
+    else if (screen === "autoSplit")
+        body = renderAutoSplit();
+    const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab, dietSettingsMode, splitDayCount, confirmApplySplit].join("|");
     return (React.createElement("div", { className: "ironlog" },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" },
