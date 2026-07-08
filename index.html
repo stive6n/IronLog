@@ -29,7 +29,7 @@
   <script>
 (function(){
 'use strict';
-
+ 
 // Carica React/ReactDOM provando più CDN in sequenza, cosi' se uno e' bloccato
 // (ad-blocker, DNS, rete aziendale) ne prova un altro automaticamente.
 var REACT_SOURCES = [
@@ -42,7 +42,7 @@ var REACTDOM_SOURCES = [
   'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js'
 ];
-
+ 
 function loadScriptChain(urls, onDone){
   var i = 0;
   function tryNext(){
@@ -57,13 +57,13 @@ function loadScriptChain(urls, onDone){
   }
   tryNext();
 }
-
+ 
 function showError(msg){
   document.getElementById('errmsg').style.display = 'block';
   document.getElementById('errmsg').textContent = msg;
   document.getElementById('retryBtn').style.display = 'inline-block';
 }
-
+ 
 loadScriptChain(REACT_SOURCES, function(reactOk){
   if(!reactOk){
     showError('Errore: impossibile caricare React da nessuna fonte. Controlla la connessione.');
@@ -77,18 +77,18 @@ loadScriptChain(REACT_SOURCES, function(reactOk){
     runApp();
   });
 });
-
+ 
 function runApp(){
 if(typeof React==='undefined'||typeof ReactDOM==='undefined'){
   showError('Errore: librerie non caricate correttamente. Ricarica la pagina.');
   return;
 }
-
+ 
 const __storage={
   get(k){return Promise.resolve().then(()=>{try{const v=localStorage.getItem(k);return v?{value:v}:null;}catch(e){return null;}});},
   set(k,v){return Promise.resolve().then(()=>{try{localStorage.setItem(k,v);}catch(e){} return {};});}
 };
-
+ 
 const IcoPlus    = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('line',{x1:12,y1:5,x2:12,y2:19}),React.createElement('line',{x1:5,y1:12,x2:19,y2:12}));
 const IcoLeft    = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('polyline',{points:'15 18 9 12 15 6'}));
 const IcoRight   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('polyline',{points:'9 18 15 12 9 6'}));
@@ -98,7 +98,11 @@ const IcoCheck   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewB
 const IcoX       = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('line',{x1:18,y1:6,x2:6,y2:18}),React.createElement('line',{x1:6,y1:6,x2:18,y2:18}));
 const IcoDownload= ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3}));
 const IcoUpload  = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'}),React.createElement('polyline',{points:'17 8 12 3 7 8'}),React.createElement('line',{x1:12,y1:3,x2:12,y2:15}));
-
+const IcoCalendar= ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('rect',{x:3,y:4,width:18,height:18,rx:2}),React.createElement('line',{x1:16,y1:2,x2:16,y2:6}),React.createElement('line',{x1:8,y1:2,x2:8,y2:6}),React.createElement('line',{x1:3,y1:10,x2:21,y2:10}));
+const IcoTrophy  = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M8 21h8'}),React.createElement('path',{d:'M12 17v4'}),React.createElement('path',{d:'M7 4h10v5a5 5 0 0 1-10 0V4z'}),React.createElement('path',{d:'M17 5h3a2 2 0 0 1-2 4h-1'}),React.createElement('path',{d:'M7 5H4a2 2 0 0 0 2 4h1'}));
+const IcoFlame   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 2c-1 3-5 6-5 11a5 5 0 0 0 10 0c0-1.5-.6-2.5-1.2-3.3.1 1.6-.8 2.3-.8 2.3.3-2.8-1.8-4.7-3-7z'}));
+const IcoRuler   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M3 17l14-14 4 4-14 14H3v-4z'}),React.createElement('line',{x1:14.5,y1:5.5,x2:17.5,y2:8.5}),React.createElement('line',{x1:11,y1:9,x2:13,y2:11}),React.createElement('line',{x1:7.5,y1:12.5,x2:9.5,y2:14.5}));
+ 
 function SvgLineChart({data}){
   if(!data||data.length<2)return null;
   const W=300,H=130,PL=38,PR=10,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
@@ -170,11 +174,11 @@ function sessionTopWeight(sets) {
     return max;
 }
 function emptyState() {
-    return { days: [], history: [] };
+    return { days: [], history: [], measurements: [] };
 }
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
+ 
 .ironlog * { box-sizing: border-box; }
 .ironlog {
   --bg: #1E1B18;
@@ -735,6 +739,150 @@ const CSS = `
   opacity: 0.8;
   margin-bottom: 4px;
 }
+ 
+/* ── Transizioni schermata & micro-animazioni ─────────────────────── */
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ironlog .screen-anim {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  animation: screenIn 0.28s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes setPulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.ironlog .set-check.done { animation: setPulse 0.32s cubic-bezier(0.34,1.56,0.64,1); }
+.ironlog .set-row { transition: opacity 0.25s ease; }
+.ironlog .row-card.clickable, .ironlog .btn, .ironlog .icon-btn, .ironlog .tab-btn {
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+}
+.ironlog .icon-btn:active, .ironlog .btn:active { transform: scale(0.96); }
+@keyframes prPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.ironlog .pr-badge {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  animation: prPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+ 
+/* ── Masthead con pulsante statistiche ────────────────────────────── */
+.ironlog .masthead-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+ 
+/* ── Pagina Statistiche ────────────────────────────────────────────── */
+.ironlog .stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.ironlog .stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+}
+.ironlog .stat-card-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ironlog .stat-card-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+.ironlog .heatmap-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.ironlog .heatmap-grid {
+  display: flex;
+  gap: 3px;
+  width: max-content;
+}
+.ironlog .heatmap-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ironlog .heatmap-month-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  height: 12px;
+  white-space: nowrap;
+}
+.ironlog .heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.ironlog .heatmap-cell.lvl1 { background: rgba(217,165,61,0.45); border-color: rgba(217,165,61,0.45); }
+.ironlog .heatmap-cell.lvl2 { background: var(--accent); border-color: var(--accent); }
+.ironlog .heatmap-cell.future { background: transparent; border-color: transparent; cursor: default; }
+.ironlog .heatmap-cell.selected { outline: 2px solid var(--text); outline-offset: 1px; }
+.ironlog .heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.ironlog .heatmap-legend .heatmap-cell { cursor: default; width: 10px; height: 10px; }
+.ironlog .pr-weight {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ironlog .pr-weight .pr-reps { color: var(--text-muted); font-size: 12px; font-weight: 400; margin-left: 2px; }
+.ironlog .measure-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ironlog .measure-select {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
 `;
 function emptyDayDraftName(n) {
     return "";
@@ -769,6 +917,13 @@ function App() {
     const fileInputRef = useRef(null);
     const [importPreview, setImportPreview] = useState(null);
     const [importError, setImportError] = useState(null);
+    // ── Statistiche: heatmap, PR, misure corporee ───────────────────
+    const [statsTab, setStatsTab] = useState("heatmap");
+    const [selectedHeatKey, setSelectedHeatKey] = useState(null);
+    const [addingMeasurement, setAddingMeasurement] = useState(false);
+    const [measureDraft, setMeasureDraft] = useState({ weight: "", chest: "", waist: "", hips: "", arm: "" });
+    const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState(null);
+    const [measureChartField, setMeasureChartField] = useState("weight");
     // ── Session timers & checkboxes ─────────────────────────────────
     const [sessionStartTime, setSessionStartTime] = useState(null);
     const [sessionElapsed, setSessionElapsed] = useState(0);
@@ -786,7 +941,7 @@ function App() {
                 ]);
                 if (dataRes && dataRes.value) {
                     const parsed = JSON.parse(dataRes.value);
-                    setAppState({ days: parsed.days || [], history: parsed.history || [] });
+                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [] });
                 }
                 if (navRes && navRes.value) {
                     const nav = JSON.parse(navRes.value);
@@ -852,6 +1007,7 @@ function App() {
     }
     const days = appState.days;
     const history = appState.history;
+    const measurements = appState.measurements || [];
     const currentDay = days.find((d) => d.id === dayId) || null;
     const currentExercise = currentDay ? currentDay.exercises.find((e) => e.id === exerciseId) : null;
     const currentHistory = history.find((h) => h.id === historyId) || null;
@@ -1072,6 +1228,114 @@ function App() {
             data.push({ label: formatShortDate(h.date), weight: top });
         });
         return data;
+    }
+    // ── Statistiche: streak e heatmap ───────────────────────────────
+    function toDayKey(d) {
+        return d.toISOString().slice(0, 10);
+    }
+    function computeStreaks() {
+        const daysSet = new Set(history.map((h) => h.date.slice(0, 10)));
+        let current = 0;
+        let cd = new Date();
+        cd.setHours(0, 0, 0, 0);
+        if (!daysSet.has(toDayKey(cd))) {
+            cd.setDate(cd.getDate() - 1);
+        }
+        while (daysSet.has(toDayKey(cd))) {
+            current++;
+            cd.setDate(cd.getDate() - 1);
+        }
+        const sortedDates = [...daysSet].sort();
+        let longest = 0, run = 0, prevDate = null;
+        sortedDates.forEach((ds) => {
+            const d = new Date(ds + "T00:00:00");
+            if (prevDate) {
+                const diff = Math.round((d - prevDate) / 86400000);
+                run = diff === 1 ? run + 1 : 1;
+            } else {
+                run = 1;
+            }
+            longest = Math.max(longest, run);
+            prevDate = d;
+        });
+        return { current, longest, totalDays: daysSet.size };
+    }
+    function buildHeatmapWeeks(weeksCount) {
+        const counts = {};
+        history.forEach((h) => {
+            const k = h.date.slice(0, 10);
+            counts[k] = (counts[k] || 0) + 1;
+        });
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dow = (today.getDay() + 6) % 7; // 0 = lunedì
+        const thisMonday = new Date(today);
+        thisMonday.setDate(today.getDate() - dow);
+        const start = new Date(thisMonday);
+        start.setDate(thisMonday.getDate() - 7 * (weeksCount - 1));
+        const weeks = [];
+        for (let w = 0; w < weeksCount; w++) {
+            const week = [];
+            for (let d = 0; d < 7; d++) {
+                const dt = new Date(start);
+                dt.setDate(start.getDate() + w * 7 + d);
+                const key = toDayKey(dt);
+                week.push({ date: dt, key, count: counts[key] || 0, future: dt > today });
+            }
+            weeks.push(week);
+        }
+        return weeks;
+    }
+    // ── Statistiche: record personali ───────────────────────────────
+    function computeBestMap() {
+        const best = {};
+        const sortedAsc = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        sortedAsc.forEach((h) => {
+            h.exercises.forEach((ex) => {
+                const top = sessionTopWeight(ex.sets);
+                if (top === null)
+                    return;
+                const cur = best[ex.id];
+                if (!cur || top > cur.weight) {
+                    const topSet = ex.sets.reduce((acc, s) => {
+                        const w = parseFloat(String(s.weight).replace(",", "."));
+                        if (isNaN(w))
+                            return acc;
+                        if (!acc || w > parseFloat(String(acc.weight).replace(",", ".")))
+                            return s;
+                        return acc;
+                    }, null);
+                    best[ex.id] = { weight: top, date: h.date, dayName: h.dayName, exName: ex.name, reps: topSet ? topSet.reps : "" };
+                }
+            });
+        });
+        return best;
+    }
+    // ── Misure corporee ──────────────────────────────────────────────
+    function addMeasurement() {
+        const d = measureDraft;
+        if (!d.weight.trim() && !d.chest.trim() && !d.waist.trim() && !d.hips.trim() && !d.arm.trim())
+            return;
+        const entry = {
+            id: uid(),
+            date: new Date().toISOString(),
+            weight: d.weight.trim(),
+            chest: d.chest.trim(),
+            waist: d.waist.trim(),
+            hips: d.hips.trim(),
+            arm: d.arm.trim(),
+        };
+        persist(Object.assign(Object.assign({}, appState), { measurements: [entry, ...measurements] }));
+        setMeasureDraft({ weight: "", chest: "", waist: "", hips: "", arm: "" });
+        setAddingMeasurement(false);
+    }
+    function removeMeasurement(id) {
+        persist(Object.assign(Object.assign({}, appState), { measurements: measurements.filter((m) => m.id !== id) }));
+        setConfirmDeleteMeasurement(null);
+    }
+    function openStats() {
+        setScreen("stats");
+        persistNav({ screen: "stats", tab });
     }
     function completeSession() {
         if (!currentDay)
@@ -1314,8 +1578,10 @@ function App() {
     }
     function renderHome() {
         return (React.createElement(React.Fragment, null,
-            React.createElement("div", { className: "masthead" },
-                React.createElement("div", { className: "masthead-title" }, "Allenamenti")),
+            React.createElement("div", { className: "masthead masthead-row" },
+                React.createElement("div", { className: "masthead-title" }, "Allenamenti"),
+                React.createElement("button", { className: "icon-btn", "aria-label": "Statistiche", onClick: openStats },
+                    React.createElement(IcoCalendar, { size: 18 }))),
             React.createElement("div", { className: "tab-row" },
                 React.createElement("button", { className: "tab-btn" + (tab === "todo" ? " active" : ""), onClick: () => setTab("todo") }, "Da fare"),
                 React.createElement("button", { className: "tab-btn" + (tab === "past" ? " active" : ""), onClick: () => setTab("past") }, "Passati"),
@@ -1472,6 +1738,8 @@ function App() {
             return null;
         const isLast = sessionIdx === exercises.length - 1;
         const prev = getLatestHistoryFor(currentDay.id, ex.id);
+        const bestMap = computeBestMap();
+        const exBest = bestMap[ex.id] || null;
         return (React.createElement(React.Fragment, null,
             React.createElement(Header, { title: currentDay.name, eyebrow: `ESERCIZIO ${sessionIdx + 1} DI ${exercises.length}`, onBack: () => {
                     setScreen("day");
@@ -1517,12 +1785,14 @@ function App() {
                         React.createElement("span", null))),
                     ex.sets.map((s, i) => {
                         const done = !!sessionChecked[s.id];
+                        const curW = parseFloat(String(s.weight).replace(",", "."));
+                        const isPR = exBest && !isNaN(curW) && curW > exBest.weight;
                         return (React.createElement("div", { className: "set-row" + (done ? " done" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
                             React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, i + 1),
                             React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
                             React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
                             React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => (Object.assign(Object.assign({}, c), { [s.id]: !c[s.id] }))) }, done && React.createElement(IcoCheck, { size: 13 })),
-                            React.createElement("span", null)));
+                            isPR ? React.createElement("span", { className: "pr-badge", title: `Nuovo record! Precedente: ${exBest.weight}kg` }, React.createElement(IcoTrophy, { size: 15 })) : React.createElement("span", null)));
                     }),
                     ex.sets.length === 0 && React.createElement("div", { className: "row-sub" }, "Nessuna serie impostata per questo esercizio.")),
                 React.createElement("div", { className: "section-label", style: { marginTop: 14 } }, "Note sessione"),
@@ -1586,6 +1856,138 @@ function App() {
                 React.createElement("div", { className: "section-label" }, "Note personali"),
                 ex.note ? React.createElement("div", { className: "note-readout" }, ex.note) : React.createElement("div", { className: "note-readout muted" }, "Nessuna nota per questo esercizio."))));
     }
+    function renderStatsHeatmap() {
+        const streaks = computeStreaks();
+        const weeks = buildHeatmapWeeks(24);
+        const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+        let lastMonth = null;
+        const monthLabels = weeks.map((week) => {
+            const m = week[0].date.getMonth();
+            const label = m !== lastMonth ? monthNames[m] : "";
+            lastMonth = m;
+            return label;
+        });
+        const selected = selectedHeatKey ? weeks.flat().find((c) => c.key === selectedHeatKey) : null;
+        return (React.createElement(React.Fragment, null,
+            React.createElement("div", { className: "stat-cards" },
+                React.createElement("div", { className: "stat-card" },
+                    React.createElement(IcoFlame, { size: 18 }),
+                    React.createElement("div", { className: "stat-card-value" }, streaks.current),
+                    React.createElement("div", { className: "stat-card-label" }, "Streak attuale")),
+                React.createElement("div", { className: "stat-card" },
+                    React.createElement(IcoTrophy, { size: 18 }),
+                    React.createElement("div", { className: "stat-card-value" }, streaks.longest),
+                    React.createElement("div", { className: "stat-card-label" }, "Streak record")),
+                React.createElement("div", { className: "stat-card" },
+                    React.createElement(IcoCalendar, { size: 18 }),
+                    React.createElement("div", { className: "stat-card-value" }, streaks.totalDays),
+                    React.createElement("div", { className: "stat-card-label" }, "Giorni allenati")),
+            ),
+            React.createElement("div", { className: "section-label", style: { marginTop: 18 } }, "Ultimi 6 mesi"),
+            React.createElement("div", { className: "heatmap-scroll" },
+                React.createElement("div", { className: "heatmap-grid" },
+                    weeks.map((week, wi) => (React.createElement("div", { className: "heatmap-col", key: wi },
+                        React.createElement("div", { className: "heatmap-month-label" }, monthLabels[wi]),
+                        week.map((cell) => (React.createElement("div", {
+                            key: cell.key,
+                            className: "heatmap-cell" + (cell.future ? " future" : cell.count > 1 ? " lvl2" : cell.count === 1 ? " lvl1" : "") + (selectedHeatKey === cell.key ? " selected" : ""),
+                            onClick: () => !cell.future && setSelectedHeatKey(cell.key === selectedHeatKey ? null : cell.key),
+                        })))))))),
+            React.createElement("div", { className: "heatmap-legend" },
+                React.createElement("span", null, "Meno"),
+                React.createElement("span", { className: "heatmap-cell" }),
+                React.createElement("span", { className: "heatmap-cell lvl1" }),
+                React.createElement("span", { className: "heatmap-cell lvl2" }),
+                React.createElement("span", null, "Più")),
+            selected && (React.createElement("div", { className: "note-card ex-desc", style: { marginTop: 14 } },
+                React.createElement("div", { className: "note-card-label" }, selected.date.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long" })),
+                selected.count > 0 ? `${selected.count} allenamento/i registrato/i` : "Nessun allenamento registrato"))));
+    }
+    function renderStatsPR() {
+        const bestMap = computeBestMap();
+        const list = Object.values(bestMap).sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (list.length === 0) {
+            return React.createElement("div", { className: "empty-state" }, "Nessun record ancora: completa un allenamento per iniziare a registrare i tuoi massimali.");
+        }
+        return (React.createElement("div", { className: "list" }, list.map((pr, i) => (React.createElement("div", { className: "row-card", key: i },
+            React.createElement("div", { className: "plate-badge filled" }, React.createElement(IcoTrophy, { size: 15 })),
+            React.createElement("div", { className: "row-main" },
+                React.createElement("div", { className: "row-title" }, pr.exName),
+                React.createElement("div", { className: "row-sub" }, pr.dayName, " \u00B7 ", formatDate(pr.date))),
+            React.createElement("div", { className: "pr-weight" },
+                pr.weight, " kg", React.createElement("span", { className: "pr-reps" }, pr.reps ? ` × ${pr.reps}` : "")))))));
+    }
+    function renderStatsMeasure() {
+        const sorted = [...measurements].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const chartFields = [
+            { key: "weight", label: "Peso" },
+            { key: "chest", label: "Torace" },
+            { key: "waist", label: "Vita" },
+            { key: "hips", label: "Fianchi" },
+            { key: "arm", label: "Braccio" },
+        ];
+        const chartData = [...measurements]
+            .filter((m) => String(m[measureChartField] || "").trim() !== "")
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .map((m) => ({ label: formatShortDate(m.date), weight: parseFloat(String(m[measureChartField]).replace(",", ".")) }))
+            .filter((d) => !isNaN(d.weight));
+        return (React.createElement(React.Fragment, null,
+            !addingMeasurement ? (React.createElement("button", { className: "add-trigger", onClick: () => setAddingMeasurement(true) },
+                React.createElement(IcoPlus, { size: 16 }), " Nuova misurazione")) : (React.createElement("div", { className: "add-form" },
+                React.createElement("div", { className: "add-form-head" },
+                    React.createElement("span", { className: "eyebrow" }, "Peso (kg)"),
+                    React.createElement("input", { className: "input-text", autoFocus: true, inputMode: "decimal", placeholder: "es. 78.5", value: measureDraft.weight, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { weight: e.target.value })) })),
+                React.createElement("div", { className: "measure-grid" },
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Torace (cm)", value: measureDraft.chest, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { chest: e.target.value })) }),
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Vita (cm)", value: measureDraft.waist, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { waist: e.target.value })) }),
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Fianchi (cm)", value: measureDraft.hips, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { hips: e.target.value })) }),
+                    React.createElement("input", { className: "input-text", inputMode: "decimal", placeholder: "Braccio (cm)", value: measureDraft.arm, onChange: (e) => setMeasureDraft(Object.assign(Object.assign({}, measureDraft), { arm: e.target.value })) })),
+                React.createElement("div", { className: "form-actions" },
+                    React.createElement("button", { className: "btn ghost", onClick: () => { setAddingMeasurement(false); setMeasureDraft({ weight: "", chest: "", waist: "", hips: "", arm: "" }); } }, "Annulla"),
+                    React.createElement("button", { className: "btn primary", onClick: addMeasurement }, "Salva")))),
+            chartData.length >= 2 && (React.createElement("div", { className: "compare-card", style: { marginTop: 14 } },
+                React.createElement("div", { className: "compare-head" },
+                    React.createElement("span", { className: "lbl" }, "Andamento"),
+                    React.createElement("select", { className: "measure-select", value: measureChartField, onChange: (e) => setMeasureChartField(e.target.value) }, chartFields.map((f) => React.createElement("option", { key: f.key, value: f.key }, f.label)))),
+                React.createElement(SvgLineChart, { data: chartData }))),
+            React.createElement("div", { className: "section-label", style: { marginTop: 16 } }, "Storico"),
+            renderMeasurementList(sorted)));
+    }
+    function renderMeasurementRow(m) {
+        const subParts = [
+            m.chest && `Torace ${m.chest}cm`,
+            m.waist && `Vita ${m.waist}cm`,
+            m.hips && `Fianchi ${m.hips}cm`,
+            m.arm && `Braccio ${m.arm}cm`,
+        ].filter(Boolean).join(" \u00B7 ") || "—";
+        const actions = confirmDeleteMeasurement === m.id
+            ? React.createElement("div", { className: "confirm-row" },
+                React.createElement("button", { className: "icon-btn danger", onClick: () => removeMeasurement(m.id) }, React.createElement(IcoCheck, { size: 16 })),
+                React.createElement("button", { className: "icon-btn", onClick: () => setConfirmDeleteMeasurement(null) }, React.createElement(IcoX, { size: 16 })))
+            : React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteMeasurement(m.id) }, React.createElement(IcoTrash, { size: 15 }));
+        return React.createElement("div", { className: "row-card", key: m.id },
+            React.createElement("div", { className: "row-main" },
+                React.createElement("div", { className: "row-title" }, m.weight ? `${m.weight} kg` : "—", " \u00B7 ", formatDate(m.date)),
+                React.createElement("div", { className: "row-sub" }, subParts)),
+            actions);
+    }
+    function renderMeasurementList(sorted) {
+        if (sorted.length === 0) {
+            return React.createElement("div", { className: "empty-state" }, "Nessuna misurazione salvata ancora.");
+        }
+        return React.createElement("div", { className: "list" }, sorted.map((m) => renderMeasurementRow(m)));
+    }
+    function renderStats() {
+        return (React.createElement(React.Fragment, null,
+            React.createElement(Header, { title: "Statistiche", onBack: () => goHome(tab) }),
+            React.createElement("div", { className: "content" },
+                React.createElement("div", { className: "tab-row" },
+                    React.createElement("button", { className: "tab-btn" + (statsTab === "heatmap" ? " active" : ""), onClick: () => setStatsTab("heatmap") }, "Heatmap"),
+                    React.createElement("button", { className: "tab-btn" + (statsTab === "pr" ? " active" : ""), onClick: () => setStatsTab("pr") }, "Record"),
+                    React.createElement("button", { className: "tab-btn" + (statsTab === "measure" ? " active" : ""), onClick: () => setStatsTab("measure") }, "Misure")),
+                React.createElement("div", { style: { marginTop: 16 } },
+                    statsTab === "heatmap" ? renderStatsHeatmap() : statsTab === "pr" ? renderStatsPR() : renderStatsMeasure()))));
+    }
     let body;
     if (screen === "home")
         body = renderHome();
@@ -1599,11 +2001,15 @@ function App() {
         body = renderPastSession();
     else if (screen === "pastExercise")
         body = renderPastExercise();
+    else if (screen === "stats")
+        body = renderStats();
+    const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab].join("|");
     return (React.createElement("div", { className: "ironlog" },
         React.createElement("style", null, CSS),
-        React.createElement("div", { className: "shell" }, body)));
+        React.createElement("div", { className: "shell" },
+            React.createElement("div", { className: "screen-anim", key: animKey }, body))));
 }
-
+ 
 try{
   const container=document.getElementById('root');
   const root=ReactDOM.createRoot(container);
@@ -1618,3 +2024,4 @@ try{
   </script>
 </body>
 </html>
+
