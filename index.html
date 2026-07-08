@@ -103,6 +103,7 @@ const IcoTrophy  = ({s=16}) => React.createElement('svg',{width:s,height:s,viewB
 const IcoFlame   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 2c-1 3-5 6-5 11a5 5 0 0 0 10 0c0-1.5-.6-2.5-1.2-3.3.1 1.6-.8 2.3-.8 2.3.3-2.8-1.8-4.7-3-7z'}));
 const IcoRuler   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M3 17l14-14 4 4-14 14H3v-4z'}),React.createElement('line',{x1:14.5,y1:5.5,x2:17.5,y2:8.5}),React.createElement('line',{x1:11,y1:9,x2:13,y2:11}),React.createElement('line',{x1:7.5,y1:12.5,x2:9.5,y2:14.5}));
 const IcoApple   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 6c-3.5-2-8-1-8 4.5C4 16 8 21 11 21c1 0 1-.5 1-.5s0 .5 1 .5c3 0 7-5 7-10.5C20 5 15.5 4 12 6z'}),React.createElement('path',{d:'M12 6c0-1.5.5-3 2-4'}));
+const IcoPalette = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2a3 3 0 0 0 3-3c0-4.4-3.8-8-8-8z'}),React.createElement('circle',{cx:7.5,cy:11.5,r:1.2,fill:'currentColor',stroke:'none'}),React.createElement('circle',{cx:9.5,cy:7.5,r:1.2,fill:'currentColor',stroke:'none'}),React.createElement('circle',{cx:14.5,cy:7.5,r:1.2,fill:'currentColor',stroke:'none'}));
  
 function SvgLineChart({data}){
   if(!data||data.length<2)return null;
@@ -175,7 +176,7 @@ function sessionTopWeight(sets) {
     return max;
 }
 function emptyState() {
-    return { days: [], history: [], measurements: [], diet: emptyDiet() };
+    return { days: [], history: [], measurements: [], diet: emptyDiet(), theme: "gold" };
 }
 // ── Modulo alimentazione ─────────────────────────────────────────────
 const WEEKDAYS = [
@@ -196,6 +197,18 @@ function emptyDiet() {
         trainingDays: { mon: true, tue: false, wed: true, thu: false, fri: true, sat: false, sun: false },
         manualMacros,
     };
+}
+// ── Temi colore ──────────────────────────────────────────────────────
+const THEME_PRESETS = [
+    { id: "gold", label: "Chalk Gold", accent: "#E3A83B", accentInk: "#241A06", info: "#4F8FA6" },
+    { id: "red", label: "Iron Red", accent: "#E2472C", accentInk: "#2A0904", info: "#3FA68A" },
+    { id: "green", label: "Volt Green", accent: "#9FE436", accentInk: "#12210A", info: "#4A7FE4" },
+    { id: "blue", label: "Electric Blue", accent: "#3F9CE8", accentInk: "#041624", info: "#E8A23F" },
+    { id: "violet", label: "Neon Viola", accent: "#B36CE8", accentInk: "#1B0726", info: "#E8C13F" },
+    { id: "orange", label: "Rust Orange", accent: "#F2984A", accentInk: "#2B1300", info: "#4A90CE" },
+];
+function getThemePreset(id) {
+    return THEME_PRESETS.find((t) => t.id === id) || THEME_PRESETS[0];
 }
 function computeAutoDietTargets(profile) {
     const weight = parseFloat(String(profile.weightKg).replace(",", "."));
@@ -338,16 +351,16 @@ const CSS = `
  
 .ironlog * { box-sizing: border-box; }
 .ironlog {
-  --bg: #1E1B18;
-  --surface: #29251F;
-  --surface-2: #36302A;
-  --text: #F3EEE3;
-  --text-muted: #9A9088;
-  --accent: #D9A53D;
+  --bg: #17140F;
+  --surface: #241F18;
+  --surface-2: #2E2820;
+  --text: #F5EFE2;
+  --text-muted: #9C9187;
+  --accent: #E3A83B;
   --accent-ink: #241A06;
-  --danger: #B5482F;
-  --info: #5C7A8A;
-  --border: #423B32;
+  --danger: #C24A2E;
+  --info: #4F8FA6;
+  --border: #3A332A;
   --font-display: 'Oswald', sans-serif;
   --font-body: 'Work Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -363,26 +376,41 @@ const CSS = `
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0) 0 0/18px 18px,
+    radial-gradient(ellipse 100% 260px at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent),
+    var(--bg);
   position: relative;
 }
 .ironlog .masthead {
   padding: 28px 20px 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
+  position: relative;
 }
+.ironlog .masthead::after,
+.ironlog .topbar::after {
+  content: "";
+  display: block;
+  height: 4px;
+  margin-top: 14px;
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 8px, var(--bg) 8px 16px);
+  opacity: 0.9;
+}
+.ironlog .topbar::after { margin-top: 12px; }
 .ironlog .masthead-title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 30px;
+  font-size: 32px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.3);
 }
 .ironlog .topbar {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 18px 14px 14px 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 18px 14px 0 8px;
+  border-bottom: none;
 }
 .ironlog .topbar-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ironlog .eyebrow {
@@ -407,55 +435,64 @@ const CSS = `
   color: var(--text);
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.12s ease, border-color 0.12s ease;
 }
-.ironlog .icon-btn:active { background: var(--surface-2); }
+.ironlog .icon-btn:active { background: var(--surface-2); transform: scale(0.94); }
 .ironlog .icon-btn.danger { color: var(--danger); }
 .ironlog .tab-row {
   display: flex;
-  gap: 0;
-  padding: 0 16px;
-  margin-top: 14px;
+  gap: 6px;
+  padding: 12px 16px 0;
+  margin-top: 2px;
 }
 .ironlog .tab-btn {
   flex: 1;
-  background: transparent;
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text-muted);
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 14px;
-  padding: 12px 6px;
-  border-bottom: 3px solid var(--border);
+  font-size: 13px;
+  padding: 11px 6px;
+  border-radius: 10px 10px 0 0;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .ironlog .tab-btn.active {
-  color: var(--accent);
-  border-bottom: 3px solid var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 -3px 10px color-mix(in srgb, var(--accent) 45%, transparent);
 }
-.ironlog .content { padding: 18px 16px 100px; flex: 1; }
+.ironlog .content { padding: 20px 16px 100px; flex: 1; }
 .ironlog .week-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--info);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--accent);
   font-family: var(--font-mono);
+  font-weight: 600;
   font-size: 12px;
   letter-spacing: 0.06em;
-  padding: 6px 12px;
+  padding: 7px 14px;
   border-radius: 100px;
   margin-bottom: 16px;
 }
 .ironlog .section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -463,24 +500,36 @@ const CSS = `
   text-transform: uppercase;
   margin: 18px 2px 8px;
 }
+.ironlog .section-label::before {
+  content: "";
+  width: 10px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
 .ironlog .list { display: flex; flex-direction: column; gap: 10px; }
 .ironlog .row-card {
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 92%, black));
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 12px;
+  padding: 13px 14px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.22);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .ironlog .row-card.clickable { cursor: pointer; }
-.ironlog .row-card.clickable:active { background: var(--surface-2); }
+.ironlog .row-card.clickable:active { background: var(--surface-2); transform: scale(0.99); }
 .ironlog .plate-badge {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background: radial-gradient(circle at 33% 28%, var(--surface-2), var(--bg));
   border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -519,14 +568,15 @@ const CSS = `
 .ironlog .confirm-text { font-size: 13px; color: var(--danger); font-weight: 600; }
 .ironlog .confirm-actions { display: flex; gap: 8px; }
 .ironlog .add-form {
-  background: var(--surface);
-  border: 1px dashed var(--accent);
-  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 16px;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
 }
 .ironlog .add-form-head { display: flex; align-items: center; gap: 10px; }
 .ironlog .input-text {
@@ -537,24 +587,32 @@ const CSS = `
   font-family: var(--font-body);
   font-size: 15px;
   padding: 11px 12px;
-  border-radius: 9px;
+  border-radius: 11px;
   outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.ironlog .input-text:focus { border-color: var(--accent); }
+.ironlog .input-text:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
 .ironlog .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .ironlog .btn {
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
   padding: 10px 16px;
-  border-radius: 9px;
+  border-radius: 11px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
+  transition: transform 0.1s ease;
 }
+.ironlog .btn:active { transform: scale(0.97); }
 .ironlog .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.ironlog .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.ironlog .btn.primary {
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 78%, black));
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent);
+}
 .ironlog .btn.danger { background: var(--danger); color: #FBEAE3; border-color: var(--danger); }
 .ironlog .btn.ghost { background: transparent; }
 .ironlog .btn.full { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -565,20 +623,21 @@ const CSS = `
 }
 .ironlog .add-trigger {
   width: 100%;
-  background: transparent;
-  border: 1.5px dashed var(--border);
+  background: var(--surface);
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border));
   color: var(--text-muted);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 14px;
   padding: 13px;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
   margin-top: 10px;
+  transition: border-color 0.12s ease, color 0.12s ease;
 }
 .ironlog .add-trigger:active { border-color: var(--accent); color: var(--accent); }
 .ironlog .add-trigger.sm { padding: 10px; font-size: 13px; margin-top: 4px; }
@@ -586,11 +645,12 @@ const CSS = `
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--surface);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface));
   border: 1px solid var(--accent);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 10px 14px;
   margin-bottom: 16px;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .ironlog .target-label {
   font-family: var(--font-mono);
@@ -1077,7 +1137,7 @@ const CSS = `
   border-radius: 8px;
   cursor: pointer;
 }
-.ironlog .weekday-chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.ironlog .weekday-chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 45%, transparent); }
 .ironlog .diet-manual-row {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1086,6 +1146,59 @@ const CSS = `
 }
 .ironlog .diet-manual-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .ironlog .measure-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+ 
+/* ── Selettore tema colore ────────────────────────────────────────── */
+.ironlog .theme-picker-wrap { position: relative; flex-shrink: 0; }
+.ironlog .theme-popover {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  width: 216px;
+}
+.ironlog .theme-popover-title {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.ironlog .theme-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.ironlog .theme-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.ironlog .theme-swatch-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25);
+}
+.ironlog .theme-swatch.active .theme-swatch-dot { border-color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 25%, transparent); }
+.ironlog .theme-swatch-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
 `;
 function emptyDayDraftName(n) {
     return "";
@@ -1136,6 +1249,7 @@ function App() {
     // ── Creazione automatica scheda ───────────────────────────────────
     const [splitDayCount, setSplitDayCount] = useState(3);
     const [confirmApplySplit, setConfirmApplySplit] = useState(false);
+    const [themePickerOpen, setThemePickerOpen] = useState(false);
     // ── Session timers & checkboxes ─────────────────────────────────
     const [sessionStartTime, setSessionStartTime] = useState(null);
     const [sessionElapsed, setSessionElapsed] = useState(0);
@@ -1153,7 +1267,7 @@ function App() {
                 ]);
                 if (dataRes && dataRes.value) {
                     const parsed = JSON.parse(dataRes.value);
-                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet || emptyDiet() });
+                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet || emptyDiet(), theme: parsed.theme || "gold" });
                 }
                 if (navRes && navRes.value) {
                     const nav = JSON.parse(navRes.value);
@@ -1221,6 +1335,8 @@ function App() {
     const history = appState.history;
     const measurements = appState.measurements || [];
     const diet = appState.diet || emptyDiet();
+    const theme = appState.theme || "gold";
+    const themePreset = getThemePreset(theme);
     const currentDay = days.find((d) => d.id === dayId) || null;
     const currentExercise = currentDay ? currentDay.exercises.find((e) => e.id === exerciseId) : null;
     const currentHistory = history.find((h) => h.id === historyId) || null;
@@ -1589,6 +1705,11 @@ function App() {
         setScreen("diet");
         persistNav({ screen: "diet", tab });
     }
+    // ── Temi colore ─────────────────────────────────────────────────
+    function setThemeChoice(id) {
+        persist(Object.assign(Object.assign({}, appState), { theme: id }));
+        setThemePickerOpen(false);
+    }
     // ── Creazione automatica scheda ────────────────────────────────────
     function openAutoSplit() {
         setSplitDayCount(Math.min(Math.max(days.length || 3, 1), 7));
@@ -1850,6 +1971,14 @@ function App() {
             React.createElement("div", { className: "masthead masthead-row" },
                 React.createElement("div", { className: "masthead-title" }, "Allenamenti"),
                 React.createElement("div", { style: { display: "flex", gap: 8 } },
+                    React.createElement("div", { className: "theme-picker-wrap" },
+                        React.createElement("button", { className: "icon-btn", "aria-label": "Cambia colore", onClick: () => setThemePickerOpen(!themePickerOpen) },
+                            React.createElement(IcoPalette, { size: 18 })),
+                        themePickerOpen && React.createElement("div", { className: "theme-popover" },
+                            React.createElement("div", { className: "theme-popover-title" }, "Colore accento"),
+                            React.createElement("div", { className: "theme-swatch-grid" }, THEME_PRESETS.map((t) => React.createElement("button", { key: t.id, className: "theme-swatch" + (theme === t.id ? " active" : ""), onClick: () => setThemeChoice(t.id) },
+                                React.createElement("span", { className: "theme-swatch-dot", style: { background: t.accent } }),
+                                React.createElement("span", { className: "theme-swatch-label" }, t.label)))))),
                     React.createElement("button", { className: "icon-btn", "aria-label": "Alimentazione", onClick: openDiet },
                         React.createElement(IcoApple, { size: 18 })),
                     React.createElement("button", { className: "icon-btn", "aria-label": "Statistiche", onClick: openStats },
@@ -2393,7 +2522,7 @@ function App() {
     else if (screen === "autoSplit")
         body = renderAutoSplit();
     const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab, dietSettingsMode, splitDayCount, confirmApplySplit].join("|");
-    return (React.createElement("div", { className: "ironlog" },
+    return (React.createElement("div", { className: "ironlog", style: { "--accent": themePreset.accent, "--accent-ink": themePreset.accentInk, "--info": themePreset.info } },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" },
             React.createElement("div", { className: "screen-anim", key: animKey }, body))));
