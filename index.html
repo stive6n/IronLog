@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#D9A53D">
+  <meta name="theme-color" content="#17140F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="IronLog">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>IronLog</title>
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIklyb25Mb2ciLCAic2hvcnRfbmFtZSI6ICJJcm9uTG9nIiwgInN0YXJ0X3VybCI6ICIuIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxNzE0MEYiLCAidGhlbWVfY29sb3IiOiAiIzE3MTQwRiIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48cmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgcng9JzIyJyBmaWxsPSclMjMxNzE0MEYnLz48cmVjdCB4PScxNScgeT0nNDQnIHdpZHRoPSc3MCcgaGVpZ2h0PScxMicgcng9JzMnIGZpbGw9JyUyM0UzQTgzQicvPjxyZWN0IHg9JzgnIHk9JzM0JyB3aWR0aD0nMTAnIGhlaWdodD0nMzInIHJ4PSczJyBmaWxsPSclMjNFM0E4M0InLz48cmVjdCB4PSc4MicgeT0nMzQnIHdpZHRoPScxMCcgaGVpZ2h0PSczMicgcng9JzMnIGZpbGw9JyUyM0UzQTgzQicvPjwvc3ZnPiIsICJzaXplcyI6ICJhbnkiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55In0sIHsic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjxyZWN0IHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyByeD0nMjInIGZpbGw9JyUyMzE3MTQwRicvPjxyZWN0IHg9JzE1JyB5PSc0NCcgd2lkdGg9JzcwJyBoZWlnaHQ9JzEyJyByeD0nMycgZmlsbD0nJTIzRTNBODNCJy8+PHJlY3QgeD0nOCcgeT0nMzQnIHdpZHRoPScxMCcgaGVpZ2h0PSczMicgcng9JzMnIGZpbGw9JyUyM0UzQTgzQicvPjxyZWN0IHg9JzgyJyB5PSczNCcgd2lkdGg9JzEwJyBoZWlnaHQ9JzMyJyByeD0nMycgZmlsbD0nJTIzRTNBODNCJy8+PC9zdmc+IiwgInNpemVzIjogImFueSIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJtYXNrYWJsZSJ9XX0=">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2317140F'/%3E%3Crect x='15' y='44' width='70' height='12' rx='3' fill='%23E3A83B'/%3E%3Crect x='8' y='34' width='10' height='32' rx='3' fill='%23E3A83B'/%3E%3Crect x='82' y='34' width='10' height='32' rx='3' fill='%23E3A83B'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2317140F'/%3E%3Crect x='15' y='44' width='70' height='12' rx='3' fill='%23E3A83B'/%3E%3Crect x='8' y='34' width='10' height='32' rx='3' fill='%23E3A83B'/%3E%3Crect x='82' y='34' width='10' height='32' rx='3' fill='%23E3A83B'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
   <style>
@@ -29,7 +34,28 @@
   <script>
 (function(){
 'use strict';
- 
+
+// Registra un service worker minimale: serve solo a soddisfare i criteri di
+// installabilità dei browser (Chrome/Android). Nessuna cache, solo pass-through.
+if ('serviceWorker' in navigator) {
+  try {
+    var swCode = "self.addEventListener('fetch', function(e){});";
+    var swBlob = new Blob([swCode], { type: 'application/javascript' });
+    var swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(function () {});
+  } catch (e) {}
+}
+// Cattura l'evento di installazione PWA per mostrare un pulsante personalizzato.
+window.__deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  window.__deferredInstallPrompt = e;
+  window.dispatchEvent(new Event('ironlog-install-available'));
+});
+window.addEventListener('appinstalled', function () {
+  window.__deferredInstallPrompt = null;
+});
+
 // Carica React/ReactDOM provando più CDN in sequenza, cosi' se uno e' bloccato
 // (ad-blocker, DNS, rete aziendale) ne prova un altro automaticamente.
 var REACT_SOURCES = [
@@ -42,7 +68,7 @@ var REACTDOM_SOURCES = [
   'https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js'
 ];
- 
+
 function loadScriptChain(urls, onDone){
   var i = 0;
   function tryNext(){
@@ -57,13 +83,13 @@ function loadScriptChain(urls, onDone){
   }
   tryNext();
 }
- 
+
 function showError(msg){
   document.getElementById('errmsg').style.display = 'block';
   document.getElementById('errmsg').textContent = msg;
   document.getElementById('retryBtn').style.display = 'inline-block';
 }
- 
+
 loadScriptChain(REACT_SOURCES, function(reactOk){
   if(!reactOk){
     showError('Errore: impossibile caricare React da nessuna fonte. Controlla la connessione.');
@@ -77,18 +103,18 @@ loadScriptChain(REACT_SOURCES, function(reactOk){
     runApp();
   });
 });
- 
+
 function runApp(){
 if(typeof React==='undefined'||typeof ReactDOM==='undefined'){
   showError('Errore: librerie non caricate correttamente. Ricarica la pagina.');
   return;
 }
- 
+
 const __storage={
   get(k){return Promise.resolve().then(()=>{try{const v=localStorage.getItem(k);return v?{value:v}:null;}catch(e){return null;}});},
   set(k,v){return Promise.resolve().then(()=>{try{localStorage.setItem(k,v);}catch(e){} return {};});}
 };
- 
+
 const IcoPlus    = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('line',{x1:12,y1:5,x2:12,y2:19}),React.createElement('line',{x1:5,y1:12,x2:19,y2:12}));
 const IcoLeft    = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('polyline',{points:'15 18 9 12 15 6'}));
 const IcoRight   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('polyline',{points:'9 18 15 12 9 6'}));
@@ -104,7 +130,7 @@ const IcoFlame   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewB
 const IcoRuler   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M3 17l14-14 4 4-14 14H3v-4z'}),React.createElement('line',{x1:14.5,y1:5.5,x2:17.5,y2:8.5}),React.createElement('line',{x1:11,y1:9,x2:13,y2:11}),React.createElement('line',{x1:7.5,y1:12.5,x2:9.5,y2:14.5}));
 const IcoApple   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 6c-3.5-2-8-1-8 4.5C4 16 8 21 11 21c1 0 1-.5 1-.5s0 .5 1 .5c3 0 7-5 7-10.5C20 5 15.5 4 12 6z'}),React.createElement('path',{d:'M12 6c0-1.5.5-3 2-4'}));
 const IcoPalette = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2a3 3 0 0 0 3-3c0-4.4-3.8-8-8-8z'}),React.createElement('circle',{cx:7.5,cy:11.5,r:1.2,fill:'currentColor',stroke:'none'}),React.createElement('circle',{cx:9.5,cy:7.5,r:1.2,fill:'currentColor',stroke:'none'}),React.createElement('circle',{cx:14.5,cy:7.5,r:1.2,fill:'currentColor',stroke:'none'}));
- 
+
 function SvgLineChart({data}){
   if(!data||data.length<2)return null;
   const W=300,H=130,PL=38,PR=10,PT=10,PB=28,iW=W-PL-PR,iH=H-PT-PB;
@@ -129,6 +155,7 @@ const NAV_KEY = "iron-log-nav-v1";
 const MAX_DAYS = 7;
 const MAX_EXERCISES = 10;
 const MAX_SETS = 5;
+const MAX_WARMUP_SETS = 4;
 function fmtTime(secs) {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
@@ -146,6 +173,12 @@ const COLORS = {
 };
 function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function isIOSDevice() {
+    return /iP(hone|od|ad)/.test(navigator.userAgent) && !window.MSStream;
+}
+function isStandaloneMode() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 }
 function getIsoWeek(d) {
     const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -167,6 +200,8 @@ function formatShortDate(iso) {
 function sessionTopWeight(sets) {
     let max = null;
     sets.forEach((s) => {
+        if (s.warmup)
+            return;
         const w = parseFloat(String(s.weight).replace(",", "."));
         if (!isNaN(w)) {
             if (max === null || w > max)
@@ -176,7 +211,7 @@ function sessionTopWeight(sets) {
     return max;
 }
 function emptyState() {
-    return { days: [], history: [], measurements: [], diet: emptyDiet(), theme: "gold" };
+    return { days: [], history: [], measurements: [], diet: emptyDiet(), theme: "gold", lastBackupAt: null, lastBackupSnoozeAt: null };
 }
 // ── Modulo alimentazione ─────────────────────────────────────────────
 const WEEKDAYS = [
@@ -271,6 +306,16 @@ const EXERCISE_POOL = {
     calves: ["Calf raise in piedi", "Calf raise seduto"],
     core: ["Plank", "Crunch ai cavi", "Russian twist", "Sollevamento gambe"],
 };
+const ALL_EXERCISE_NAMES = Array.from(new Set(Object.values(EXERCISE_POOL).flat()));
+function ExerciseSuggestions({ value, onPick }) {
+    const q = (value || "").trim().toLowerCase();
+    if (q.length < 2)
+        return null;
+    const matches = ALL_EXERCISE_NAMES.filter((n) => n.toLowerCase().includes(q) && n.toLowerCase() !== q).slice(0, 5);
+    if (matches.length === 0)
+        return null;
+    return React.createElement("div", { className: "exercise-suggestions" }, matches.map((n) => (React.createElement("button", { key: n, type: "button", className: "exercise-suggestion-chip", onClick: () => onPick(n) }, n))));
+}
 const SPLIT_TEMPLATES = {
     1: [
         { name: "Full Body", blocks: [["chest", 2], ["back", 2], ["quads", 1], ["shoulders", 1], ["hamstrings", 1], ["core", 1]] },
@@ -348,7 +393,7 @@ function summarizeGroups(exercises) {
 }
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
- 
+
 .ironlog * { box-sizing: border-box; }
 .ironlog {
   --bg: #17140F;
@@ -956,7 +1001,7 @@ const CSS = `
   opacity: 0.8;
   margin-bottom: 4px;
 }
- 
+
 /* ── Transizioni schermata & micro-animazioni ─────────────────────── */
 @keyframes screenIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -990,7 +1035,7 @@ const CSS = `
   color: var(--accent);
   animation: prPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
- 
+
 /* ── Masthead con pulsante statistiche ────────────────────────────── */
 .ironlog .masthead-row {
   display: flex;
@@ -998,7 +1043,7 @@ const CSS = `
   justify-content: space-between;
   gap: 12px;
 }
- 
+
 /* ── Pagina Statistiche ────────────────────────────────────────────── */
 .ironlog .stat-cards {
   display: grid;
@@ -1100,7 +1145,7 @@ const CSS = `
   font-family: var(--font-mono);
   font-size: 11px;
 }
- 
+
 /* ── Modulo alimentazione ─────────────────────────────────────────── */
 .ironlog .diet-kcal {
   font-family: var(--font-mono);
@@ -1146,7 +1191,104 @@ const CSS = `
 }
 .ironlog .diet-manual-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .ironlog .measure-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
- 
+
+/* ── Autocompletamento esercizi ───────────────────────────────────── */
+.ironlog .exercise-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -2px;
+}
+.ironlog .exercise-suggestion-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 100px;
+  cursor: pointer;
+}
+.ironlog .exercise-suggestion-chip:active { border-color: var(--accent); color: var(--accent); }
+
+/* ── Snackbar Annulla ─────────────────────────────────────────────── */
+.ironlog .undo-snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 448px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 12px 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 30;
+  font-size: 13.5px;
+  animation: undoSlideIn 0.2s ease;
+}
+.ironlog .undo-snackbar span { color: var(--text); flex: 1; min-width: 0; }
+@keyframes undoSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Vista rapida Oggi ────────────────────────────────────────────── */
+.ironlog .today-card {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface));
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.ironlog .today-card-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.ironlog .today-card-body { display: flex; flex-direction: column; gap: 8px; }
+.ironlog .today-card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+}
+.ironlog .today-card-row.clickable { cursor: pointer; }
+.ironlog .today-card-row.clickable:active { background: var(--bg); }
+.ironlog .today-card-row span:first-of-type { flex: 1; }
+.ironlog .today-card-arrow { color: var(--accent); font-weight: 700; }
+.ironlog .today-card-empty { color: var(--text-muted); font-size: 13px; font-weight: 400; }
+
+/* ── Serie di avvicinamento ───────────────────────────────────────── */
+.ironlog .warmup-row { opacity: 0.82; }
+.ironlog .warmup-row .set-badge { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
+.ironlog .warmup-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--info);
+  background: color-mix(in srgb, var(--info) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--info) 45%, var(--border));
+  border-radius: 100px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
 /* ── Selettore tema colore ────────────────────────────────────────── */
 .ironlog .theme-picker-wrap { position: relative; flex-shrink: 0; }
 .ironlog .theme-popover {
@@ -1250,10 +1392,16 @@ function App() {
     const [splitDayCount, setSplitDayCount] = useState(3);
     const [confirmApplySplit, setConfirmApplySplit] = useState(false);
     const [themePickerOpen, setThemePickerOpen] = useState(false);
+    const [installPromptReady, setInstallPromptReady] = useState(false);
+    const [undoState, setUndoState] = useState(null);
+    const undoTimerRef = useRef(null);
+    const navRef = useRef({});
     // ── Session timers & checkboxes ─────────────────────────────────
     const [sessionStartTime, setSessionStartTime] = useState(null);
     const [sessionElapsed, setSessionElapsed] = useState(0);
     const [restRunning, setRestRunning] = useState(false);
+    const [restStartedAt, setRestStartedAt] = useState(null);
+    const [restAccumulated, setRestAccumulated] = useState(0);
     const [restElapsed, setRestElapsed] = useState(0);
     const [sessionChecked, setSessionChecked] = useState({});
     const globalTimerRef = useRef(null);
@@ -1267,10 +1415,11 @@ function App() {
                 ]);
                 if (dataRes && dataRes.value) {
                     const parsed = JSON.parse(dataRes.value);
-                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet || emptyDiet(), theme: parsed.theme || "gold" });
+                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet || emptyDiet(), theme: parsed.theme || "gold", lastBackupAt: parsed.lastBackupAt || null, lastBackupSnoozeAt: parsed.lastBackupSnoozeAt || null });
                 }
                 if (navRes && navRes.value) {
                     const nav = JSON.parse(navRes.value);
+                    navRef.current = nav;
                     if (nav.screen)
                         setScreen(nav.screen === "dietSettings" ? "diet" : nav.screen);
                     if (nav.tab)
@@ -1287,6 +1436,16 @@ function App() {
                         setSessionIdx(nav.sessionIdx);
                     if (nav.sessionNotes)
                         setSessionNotes(nav.sessionNotes);
+                    if (nav.sessionStartTime != null)
+                        setSessionStartTime(nav.sessionStartTime);
+                    if (nav.sessionChecked)
+                        setSessionChecked(nav.sessionChecked);
+                    if (nav.restRunning != null)
+                        setRestRunning(nav.restRunning);
+                    if (nav.restStartedAt != null)
+                        setRestStartedAt(nav.restStartedAt);
+                    if (nav.restAccumulated != null)
+                        setRestAccumulated(nav.restAccumulated);
                 }
             }
             catch (e) {
@@ -1297,8 +1456,9 @@ function App() {
             }
         })();
     }, []);
-    const persistNav = useCallback((nav) => {
-        __storage.set(NAV_KEY, JSON.stringify(nav));
+    const persistNav = useCallback((partial) => {
+        navRef.current = Object.assign(Object.assign({}, navRef.current), partial);
+        __storage.set(NAV_KEY, JSON.stringify(navRef.current));
     }, []);
     const persist = useCallback((next) => {
         setAppState(next);
@@ -1306,25 +1466,44 @@ function App() {
     }, []);
     // Global workout timer
     useEffect(() => {
-        if (sessionStartTime !== null) {
-            globalTimerRef.current = setInterval(() => {
+        function tick() {
+            if (sessionStartTime !== null)
                 setSessionElapsed(Math.floor((Date.now() - sessionStartTime) / 1000));
-            }, 1000);
+        }
+        if (sessionStartTime !== null) {
+            tick();
+            globalTimerRef.current = setInterval(tick, 1000);
         }
         return () => clearInterval(globalTimerRef.current);
     }, [sessionStartTime]);
+    // Installazione PWA
+    useEffect(() => {
+        if (window.__deferredInstallPrompt)
+            setInstallPromptReady(true);
+        const onAvailable = () => setInstallPromptReady(true);
+        const onInstalled = () => setInstallPromptReady(false);
+        window.addEventListener("ironlog-install-available", onAvailable);
+        window.addEventListener("appinstalled", onInstalled);
+        return () => {
+            window.removeEventListener("ironlog-install-available", onAvailable);
+            window.removeEventListener("appinstalled", onInstalled);
+        };
+    }, []);
     // Rest timer
     useEffect(() => {
+        function tick() {
+            if (restRunning && restStartedAt !== null)
+                setRestElapsed(restAccumulated + Math.floor((Date.now() - restStartedAt) / 1000));
+        }
         if (restRunning) {
-            restTimerRef.current = setInterval(() => {
-                setRestElapsed(e => e + 1);
-            }, 1000);
+            tick();
+            restTimerRef.current = setInterval(tick, 1000);
         }
         else {
-            clearInterval(restTimerRef.current);
+            setRestElapsed(restAccumulated);
         }
         return () => clearInterval(restTimerRef.current);
-    }, [restRunning]);
+    }, [restRunning, restStartedAt, restAccumulated]);
     if (!loaded) {
         return (React.createElement("div", { className: "ironlog" },
             React.createElement("style", null, CSS),
@@ -1337,6 +1516,10 @@ function App() {
     const diet = appState.diet || emptyDiet();
     const theme = appState.theme || "gold";
     const themePreset = getThemePreset(theme);
+    const DAY_MS = 24 * 3600 * 1000;
+    const daysSinceBackup = appState.lastBackupAt ? (Date.now() - new Date(appState.lastBackupAt).getTime()) / DAY_MS : Infinity;
+    const daysSinceSnooze = appState.lastBackupSnoozeAt ? (Date.now() - new Date(appState.lastBackupSnoozeAt).getTime()) / DAY_MS : Infinity;
+    const needsBackupReminder = days.length > 0 && daysSinceBackup > 14 && daysSinceSnooze > 7;
     const currentDay = days.find((d) => d.id === dayId) || null;
     const currentExercise = currentDay ? currentDay.exercises.find((e) => e.id === exerciseId) : null;
     const currentHistory = history.find((h) => h.id === historyId) || null;
@@ -1384,10 +1567,14 @@ function App() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            persist(Object.assign(Object.assign({}, appState), { lastBackupAt: new Date().toISOString() }));
         }
         catch (e) {
             // export non riuscito, ignoro silenziosamente
         }
+    }
+    function snoozeBackupReminder() {
+        persist(Object.assign(Object.assign({}, appState), { lastBackupSnoozeAt: new Date().toISOString() }));
     }
     function handleFileSelect(e) {
         const file = e.target.files && e.target.files[0];
@@ -1440,9 +1627,62 @@ function App() {
         setSessionStartTime(now);
         setSessionElapsed(0);
         setRestRunning(false);
+        setRestStartedAt(null);
+        setRestAccumulated(0);
         setRestElapsed(0);
         setScreen("session");
-        persistNav({ screen: "session", tab, dayId, sessionIdx: 0, sessionNotes: {} });
+        persistNav({ screen: "session", tab, dayId, sessionIdx: 0, sessionNotes: {}, sessionStartTime: now, sessionChecked: {}, restRunning: false, restStartedAt: null, restAccumulated: 0 });
+    }
+    function scheduleUndoClear() {
+        if (undoTimerRef.current)
+            clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = setTimeout(() => setUndoState(null), 5000);
+    }
+    function performUndo() {
+        if (undoTimerRef.current)
+            clearTimeout(undoTimerRef.current);
+        if (!undoState)
+            return;
+        if (undoState.type === "day") {
+            const next = [...days];
+            next.splice(Math.min(undoState.index, next.length), 0, undoState.item);
+            persist(Object.assign(Object.assign({}, appState), { days: next }));
+        }
+        else if (undoState.type === "exercise") {
+            const next = days.map((d) => {
+                if (d.id !== undoState.dayId)
+                    return d;
+                const exs = [...d.exercises];
+                exs.splice(Math.min(undoState.index, exs.length), 0, undoState.item);
+                return Object.assign(Object.assign({}, d), { exercises: exs });
+            });
+            persist(Object.assign(Object.assign({}, appState), { days: next }));
+        }
+        setUndoState(null);
+    }
+    function triggerInstall() {
+        const evt = window.__deferredInstallPrompt;
+        if (!evt)
+            return;
+        evt.prompt();
+        evt.userChoice.finally(() => {
+            window.__deferredInstallPrompt = null;
+            setInstallPromptReady(false);
+        });
+    }
+    function getSuggestedDay() {
+        if (days.length === 0)
+            return null;
+        if (history.length === 0)
+            return days[0];
+        const lastIdx = days.findIndex((d) => d.id === history[0].dayId);
+        if (lastIdx === -1)
+            return days[0];
+        return days[(lastIdx + 1) % days.length];
+    }
+    function getTodayWeekdayKey() {
+        const map = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+        return map[new Date().getDay()];
     }
     function addDay(name) {
         if (days.length >= MAX_DAYS)
@@ -1463,10 +1703,16 @@ function App() {
         setEditingDayId(null);
     }
     function removeDay(id) {
+        const idx = days.findIndex((d) => d.id === id);
+        const removedDay = days[idx];
         persist(Object.assign(Object.assign({}, appState), { days: days.filter((d) => d.id !== id) }));
         setConfirmDeleteDay(null);
         if (dayId === id)
             goHome("todo");
+        if (removedDay) {
+            setUndoState({ type: "day", label: `Giorno \u201C${removedDay.name}\u201D eliminato`, item: removedDay, index: idx });
+            scheduleUndoClear();
+        }
     }
     function addExercise(dId, name) {
         const day = days.find((d) => d.id === dId);
@@ -1492,10 +1738,17 @@ function App() {
         setEditingExId(null);
     }
     function removeExercise(dId, exId) {
+        const day = days.find((d) => d.id === dId);
+        const idx = day ? day.exercises.findIndex((e) => e.id === exId) : -1;
+        const removedEx = day && idx !== -1 ? day.exercises[idx] : null;
         persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => (d.id !== dId ? d : Object.assign(Object.assign({}, d), { exercises: d.exercises.filter((e) => e.id !== exId) }))) }));
         setConfirmDeleteEx(null);
         if (exerciseId === exId)
             setScreen("day");
+        if (removedEx) {
+            setUndoState({ type: "exercise", label: `Esercizio \u201C${removedEx.name}\u201D eliminato`, item: removedEx, index: idx, dayId: dId });
+            scheduleUndoClear();
+        }
     }
     function updateExerciseTarget(dId, exId, targetSets, targetReps) {
         const sets = (targetSets || "").trim();
@@ -1505,14 +1758,17 @@ function App() {
                 : Object.assign(Object.assign({}, d), { exercises: d.exercises.map((e) => (e.id === exId ? Object.assign(Object.assign({}, e), { targetSets: sets, targetReps: reps }) : e)) })) }));
         setEditingTargetExId(null);
     }
-    function addSet(dId, exId) {
+    function addSet(dId, exId, warmup) {
         persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => {
                 if (d.id !== dId)
                     return d;
                 return Object.assign(Object.assign({}, d), { exercises: d.exercises.map((e) => {
-                        if (e.id !== exId || e.sets.length >= MAX_SETS)
+                        if (e.id !== exId)
                             return e;
-                        return Object.assign(Object.assign({}, e), { sets: [...e.sets, { id: uid(), weight: "", reps: "" }] });
+                        const count = e.sets.filter((s) => !!s.warmup === !!warmup).length;
+                        if (count >= (warmup ? MAX_WARMUP_SETS : MAX_SETS))
+                            return e;
+                        return Object.assign(Object.assign({}, e), { sets: [...e.sets, { id: uid(), weight: "", reps: "", warmup: !!warmup }] });
                     }) });
             }) }));
     }
@@ -1540,7 +1796,7 @@ function App() {
         for (const h of entries) {
             const ex = h.exercises.find((e) => e.id === exId);
             if (ex)
-                return { date: h.date, sets: ex.sets, note: ex.note || "" };
+                return { date: h.date, sets: ex.sets.filter((s) => !s.warmup), note: ex.note || "" };
         }
         return null;
     }
@@ -1627,6 +1883,8 @@ function App() {
                 const cur = best[ex.id];
                 if (!cur || top > cur.weight) {
                     const topSet = ex.sets.reduce((acc, s) => {
+                        if (s.warmup)
+                            return acc;
                         const w = parseFloat(String(s.weight).replace(",", "."));
                         if (isNaN(w))
                             return acc;
@@ -1737,7 +1995,7 @@ function App() {
             exercises: currentDay.exercises.map((e) => ({
                 id: e.id,
                 name: e.name,
-                sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps })),
+                sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, warmup: !!s.warmup })),
                 note: sessionNotes[e.id] || "",
             })),
         };
@@ -1748,8 +2006,10 @@ function App() {
         setSessionStartTime(null);
         setSessionElapsed(0);
         setRestRunning(false);
+        setRestStartedAt(null);
+        setRestAccumulated(0);
         setRestElapsed(0);
-        persistNav({ screen: "home", tab: "todo" });
+        persistNav({ screen: "home", tab: "todo", sessionStartTime: null, sessionChecked: {}, sessionNotes: {}, restRunning: false, restStartedAt: null, restAccumulated: 0 });
         goHome("todo");
     }
     function removeHistoryEntry(hId) {
@@ -1776,7 +2036,20 @@ function App() {
     }
     function renderHomeTodo() {
         const week = getIsoWeek(new Date());
+        const suggestedDay = getSuggestedDay();
+        const todayDiet = getWeekDietTargets(diet).find((t) => t.key === getTodayWeekdayKey());
         return (React.createElement("div", { className: "content" },
+            (suggestedDay || (todayDiet && todayDiet.kcal !== null)) && (React.createElement("div", { className: "today-card" },
+                React.createElement("div", { className: "today-card-label" }, "Oggi"),
+                React.createElement("div", { className: "today-card-body" },
+                    suggestedDay && (React.createElement("div", { className: "today-card-row clickable", onClick: () => openDay(suggestedDay.id) },
+                        React.createElement(IcoFlame, { size: 16 }),
+                        React.createElement("span", null, suggestedDay.name),
+                        React.createElement("span", { className: "today-card-arrow" }, "\u2192"))),
+                    todayDiet && todayDiet.kcal !== null && (React.createElement("div", { className: "today-card-row clickable", onClick: openDiet },
+                        React.createElement(IcoApple, { size: 16 }),
+                        React.createElement("span", null, `${todayDiet.kcal} kcal target`),
+                        React.createElement("span", { className: "today-card-arrow" }, "\u2192")))))),
             React.createElement("div", { className: "week-pill" },
                 "Settimana ",
                 week.week,
@@ -1852,6 +2125,22 @@ function App() {
             React.createElement("button", { className: "btn primary full", style: { marginBottom: 14 }, onClick: openAutoSplit },
                 React.createElement(IcoPlus, { size: 16 }),
                 " Crea scheda automatica"),
+            !isStandaloneMode() && (React.createElement("div", { className: "row-card", style: { marginBottom: 14, borderLeftColor: "var(--info)" } },
+                React.createElement("div", { className: "row-main" },
+                    React.createElement("div", { className: "row-title" }, "Installa IronLog"),
+                    React.createElement("div", { className: "row-sub" }, installPromptReady
+                        ? "Aggiungila alla schermata Home per aprirla come un'app."
+                        : isIOSDevice()
+                            ? "Tocca Condividi, poi \u201CAggiungi a Home\u201D."
+                            : "Cerca \u201CInstalla app\u201D o \u201CAggiungi a Home\u201D nel menu del browser.")),
+                installPromptReady && (React.createElement("button", { className: "btn primary", onClick: triggerInstall }, "Installa")))),
+            needsBackupReminder && (React.createElement("div", { className: "row-card", style: { marginBottom: 14, borderLeftColor: "var(--danger)" } },
+                React.createElement("div", { className: "row-main" },
+                    React.createElement("div", { className: "row-title" }, "Backup consigliato"),
+                    React.createElement("div", { className: "row-sub" }, appState.lastBackupAt ? "Non scarichi una copia dei dati da un po'. Sono salvati solo su questo dispositivo." : "Non hai ancora scaricato una copia dei tuoi dati. Sono salvati solo su questo dispositivo.")),
+                React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } },
+                    React.createElement("button", { className: "btn primary", style: { fontSize: 12, padding: "8px 10px" }, onClick: exportData }, "Scarica"),
+                    React.createElement("button", { className: "btn ghost", style: { fontSize: 12, padding: "8px 10px" }, onClick: snoozeBackupReminder }, "Più tardi")))),
             React.createElement("div", { className: "mgmt-data-actions" },
                 React.createElement("button", { className: "btn full", onClick: exportData },
                     React.createElement(IcoDownload, { size: 16 }),
@@ -1951,6 +2240,7 @@ function App() {
                         React.createElement("div", { className: "add-form-head" },
                             React.createElement("div", { className: "plate-badge sm" }, d.exercises.length + 1),
                             React.createElement("input", { className: "input-text", autoFocus: true, value: exDraftName, onChange: (e) => setExDraftName(e.target.value), placeholder: "Nome esercizio" })),
+                        React.createElement(ExerciseSuggestions, { value: exDraftName, onPick: setExDraftName }),
                         React.createElement("div", { className: "form-actions" },
                             React.createElement("button", { className: "btn ghost", onClick: () => { setMgmtAddingExerciseDay(null); setExDraftName(""); } }, "Annulla"),
                             React.createElement("button", { className: "btn primary", disabled: !exDraftName.trim(), onClick: () => addExercise(d.id, exDraftName) }, "Crea")))) : (React.createElement("button", { className: "add-trigger sm", onClick: () => { setMgmtAddingExerciseDay(d.id); setExDraftName(""); } },
@@ -2033,6 +2323,7 @@ function App() {
                     React.createElement("div", { className: "add-form-head" },
                         React.createElement("div", { className: "plate-badge sm" }, currentDay.exercises.length + 1),
                         React.createElement("input", { className: "input-text", autoFocus: true, value: exDraftName, onChange: (e) => setExDraftName(e.target.value), placeholder: "Es. Panca inclinata con bilanciere" })),
+                    React.createElement(ExerciseSuggestions, { value: exDraftName, onPick: setExDraftName }),
                     React.createElement("div", { className: "form-actions" },
                         React.createElement("button", { className: "btn ghost", onClick: () => { setAddingExercise(false); setExDraftName(""); } }, "Annulla"),
                         React.createElement("button", { className: "btn primary", disabled: !exDraftName.trim(), onClick: () => addExercise(currentDay.id, exDraftName) }, "Crea")))) : (React.createElement("button", { className: "add-trigger", onClick: () => setAddingExercise(true) },
@@ -2045,6 +2336,8 @@ function App() {
         const idx = currentDay.exercises.findIndex((e) => e.id === currentExercise.id) + 1;
         const prev = getLatestHistoryFor(currentDay.id, currentExercise.id);
         const progressData = getProgressData(currentDay.id, currentExercise.id);
+        const warmupSets = currentExercise.sets.filter((s) => s.warmup);
+        const workingSets = currentExercise.sets.filter((s) => !s.warmup);
         return (React.createElement(React.Fragment, null,
             React.createElement(Header, { title: currentExercise.name, eyebrow: `ESERCIZIO ${idx} · ${currentDay.name.toUpperCase()}`, onBack: () => {
                     setScreen("day");
@@ -2101,14 +2394,40 @@ function App() {
                     } },
                     React.createElement(IcoPlus, { size: 16 }),
                     " Imposta schema (es. 3 \u00D7 8)")),
-                React.createElement("div", { className: "section-label" }, "Serie"),
-                React.createElement("div", { className: "sets-table" },
-                    currentExercise.sets.length > 0 && (React.createElement("div", { className: "set-header" },
+                React.createElement("div", { className: "section-label" }, "Serie di avvicinamento"),
+                warmupSets.length > 0 && (React.createElement("div", { className: "sets-table" },
+                    React.createElement("div", { className: "set-header" },
                         React.createElement("span", null, "#"),
                         React.createElement("span", null, "Peso (kg)"),
                         React.createElement("span", null, "Ripetizioni"),
                         React.createElement("span", null))),
-                    currentExercise.sets.map((s, i) => confirmDeleteSet === s.id ? (React.createElement("div", { className: "row-card", key: s.id },
+                    warmupSets.map((s, i) => confirmDeleteSet === s.id ? (React.createElement("div", { className: "row-card", key: s.id },
+                        React.createElement("div", { className: "confirm-row" },
+                            React.createElement("span", { className: "confirm-text" },
+                                "Eliminare avvicinamento A",
+                                i + 1,
+                                "?"),
+                            React.createElement("div", { className: "confirm-actions" },
+                                React.createElement("button", { className: "icon-btn", onClick: () => setConfirmDeleteSet(null) },
+                                    React.createElement(IcoX, { size: 16 })),
+                                React.createElement("button", { className: "icon-btn danger", onClick: () => removeSet(currentDay.id, currentExercise.id, s.id) },
+                                    React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row warmup-row", key: s.id },
+                        React.createElement("div", { className: "plate-badge sm" }, `A${i + 1}`),
+                        React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
+                        React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
+                        React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
+                            React.createElement(IcoTrash, { size: 14 })))))),
+                warmupSets.length < MAX_WARMUP_SETS ? (React.createElement("button", { className: "add-trigger sm", onClick: () => addSet(currentDay.id, currentExercise.id, true) },
+                    React.createElement(IcoPlus, { size: 16 }),
+                    " Aggiungi avvicinamento")) : (React.createElement("div", { className: "limit-note" }, "Hai raggiunto il massimo di 4 serie di avvicinamento.")),
+                React.createElement("div", { className: "section-label" }, "Serie"),
+                React.createElement("div", { className: "sets-table" },
+                    workingSets.length > 0 && (React.createElement("div", { className: "set-header" },
+                        React.createElement("span", null, "#"),
+                        React.createElement("span", null, "Peso (kg)"),
+                        React.createElement("span", null, "Ripetizioni"),
+                        React.createElement("span", null))),
+                    workingSets.map((s, i) => confirmDeleteSet === s.id ? (React.createElement("div", { className: "row-card", key: s.id },
                         React.createElement("div", { className: "confirm-row" },
                             React.createElement("span", { className: "confirm-text" },
                                 "Eliminare serie ",
@@ -2124,7 +2443,7 @@ function App() {
                         React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
                             React.createElement(IcoTrash, { size: 14 })))))),
-                currentExercise.sets.length < MAX_SETS ? (React.createElement("button", { className: "add-trigger", onClick: () => addSet(currentDay.id, currentExercise.id) },
+                workingSets.length < MAX_SETS ? (React.createElement("button", { className: "add-trigger", onClick: () => addSet(currentDay.id, currentExercise.id, false) },
                     React.createElement(IcoPlus, { size: 16 }),
                     " Aggiungi serie")) : (React.createElement("div", { className: "limit-note" }, "Hai raggiunto il massimo di 5 serie.")),
                 React.createElement("div", { className: "section-label" }, "Note esercizio"),
@@ -2141,6 +2460,9 @@ function App() {
         const prev = getLatestHistoryFor(currentDay.id, ex.id);
         const bestMap = computeBestMap();
         const exBest = bestMap[ex.id] || null;
+        const orderedSets = [...ex.sets.filter((s) => s.warmup), ...ex.sets.filter((s) => !s.warmup)];
+        let wCounter = 0, oCounter = 0;
+        const setLabels = orderedSets.map((s) => (s.warmup ? `A${++wCounter}` : `${++oCounter}`));
         return (React.createElement(React.Fragment, null,
             React.createElement(Header, { title: currentDay.name, eyebrow: `ESERCIZIO ${sessionIdx + 1} DI ${exercises.length}`, onBack: () => {
                     setScreen("day");
@@ -2156,8 +2478,29 @@ function App() {
                         React.createElement("div", { className: "timer-rest-label" }, "Recupero"),
                         React.createElement("div", { className: "timer-rest-value" }, fmtTime(restElapsed))),
                     React.createElement("div", { className: "timer-rest-btns" },
-                        React.createElement("button", { className: "timer-btn" + (restRunning ? " active" : ""), onClick: () => setRestRunning(r => !r) }, restRunning ? "Pausa" : "Start"),
-                        React.createElement("button", { className: "timer-btn reset", onClick: () => { setRestRunning(false); setRestElapsed(0); } }, "Reset"))),
+                        React.createElement("button", { className: "timer-btn" + (restRunning ? " active" : ""), onClick: () => {
+                                if (restRunning) {
+                                    const extra = restStartedAt !== null ? Math.floor((Date.now() - restStartedAt) / 1000) : 0;
+                                    const newAccum = restAccumulated + extra;
+                                    setRestAccumulated(newAccum);
+                                    setRestRunning(false);
+                                    setRestStartedAt(null);
+                                    persistNav({ restRunning: false, restStartedAt: null, restAccumulated: newAccum });
+                                }
+                                else {
+                                    const now = Date.now();
+                                    setRestStartedAt(now);
+                                    setRestRunning(true);
+                                    persistNav({ restRunning: true, restStartedAt: now, restAccumulated });
+                                }
+                            } }, restRunning ? "Pausa" : "Start"),
+                        React.createElement("button", { className: "timer-btn reset", onClick: () => {
+                                setRestRunning(false);
+                                setRestStartedAt(null);
+                                setRestAccumulated(0);
+                                setRestElapsed(0);
+                                persistNav({ restRunning: false, restStartedAt: null, restAccumulated: 0 });
+                            } }, "Reset"))),
                 React.createElement("div", { className: "session-ex-name" }, ex.name),
                 (ex.targetSets || ex.targetReps) && (React.createElement("div", { className: "target-pill" },
                     "Obiettivo: ",
@@ -2184,16 +2527,20 @@ function App() {
                         React.createElement("span", null, "Rip"),
                         React.createElement("span", null),
                         React.createElement("span", null))),
-                    ex.sets.map((s, i) => {
+                    orderedSets.map((s, i) => {
                         const done = !!sessionChecked[s.id];
                         const curW = parseFloat(String(s.weight).replace(",", "."));
-                        const isPR = exBest && !isNaN(curW) && curW > exBest.weight;
-                        return (React.createElement("div", { className: "set-row" + (done ? " done" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
-                            React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, i + 1),
+                        const isPR = !s.warmup && exBest && !isNaN(curW) && curW > exBest.weight;
+                        return (React.createElement("div", { className: "set-row" + (done ? " done" : "") + (s.warmup ? " warmup-row" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
+                            React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, setLabels[i]),
                             React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
                             React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
-                            React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => (Object.assign(Object.assign({}, c), { [s.id]: !c[s.id] }))) }, done && React.createElement(IcoCheck, { size: 13 })),
-                            isPR ? React.createElement("span", { className: "pr-badge", title: `Nuovo record! Precedente: ${exBest.weight}kg` }, React.createElement(IcoTrophy, { size: 15 })) : React.createElement("span", null)));
+                            React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => {
+                                    const next = Object.assign(Object.assign({}, c), { [s.id]: !c[s.id] });
+                                    persistNav({ sessionChecked: next });
+                                    return next;
+                                }) }, done && React.createElement(IcoCheck, { size: 13 })),
+                            isPR ? React.createElement("span", { className: "pr-badge", title: `Nuovo record! Precedente: ${exBest.weight}kg` }, React.createElement(IcoTrophy, { size: 15 })) : s.warmup ? React.createElement("span", { className: "warmup-tag" }, "Risc.") : React.createElement("span", null)));
                     }),
                     ex.sets.length === 0 && React.createElement("div", { className: "row-sub" }, "Nessuna serie impostata per questo esercizio.")),
                 React.createElement("div", { className: "section-label", style: { marginTop: 14 } }, "Note sessione"),
@@ -2525,9 +2872,12 @@ function App() {
     return (React.createElement("div", { className: "ironlog", style: { "--accent": themePreset.accent, "--accent-ink": themePreset.accentInk, "--info": themePreset.info } },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" },
-            React.createElement("div", { className: "screen-anim", key: animKey }, body))));
+            React.createElement("div", { className: "screen-anim", key: animKey }, body),
+            undoState && (React.createElement("div", { className: "undo-snackbar" },
+                React.createElement("span", null, undoState.label),
+                React.createElement("button", { className: "btn primary", onClick: performUndo }, "Annulla"))))));
 }
- 
+
 try{
   const container=document.getElementById('root');
   const root=ReactDOM.createRoot(container);
@@ -2542,4 +2892,3 @@ try{
   </script>
 </body>
 </html>
-
