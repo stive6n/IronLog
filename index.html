@@ -131,6 +131,7 @@ const IcoRuler   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewB
 const IcoApple   = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 6c-3.5-2-8-1-8 4.5C4 16 8 21 11 21c1 0 1-.5 1-.5s0 .5 1 .5c3 0 7-5 7-10.5C20 5 15.5 4 12 6z'}),React.createElement('path',{d:'M12 6c0-1.5.5-3 2-4'}));
 const IcoPalette = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2a3 3 0 0 0 3-3c0-4.4-3.8-8-8-8z'}),React.createElement('circle',{cx:7.5,cy:11.5,r:1.2,fill:'currentColor',stroke:'none'}),React.createElement('circle',{cx:9.5,cy:7.5,r:1.2,fill:'currentColor',stroke:'none'}),React.createElement('circle',{cx:14.5,cy:7.5,r:1.2,fill:'currentColor',stroke:'none'}));
 const IcoMove    = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('polyline',{points:'8 7 5 10 8 13'}),React.createElement('polyline',{points:'8 17 5 14 8 11'}),React.createElement('line',{x1:5,y1:10,x2:19,y2:10}),React.createElement('line',{x1:5,y1:14,x2:19,y2:14}),React.createElement('polyline',{points:'16 7 19 10 16 13'}),React.createElement('polyline',{points:'16 17 19 14 16 11'}));
+const IcoMoon    = ({s=16}) => React.createElement('svg',{width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z'}));
 
 function SvgLineChart({data}){
   if(!data||data.length<2)return null;
@@ -252,6 +253,8 @@ const THEME_PRESETS = [
     { id: "blue", label: "Electric Blue", accent: "#3F9CE8", accentInk: "#041624", info: "#E8A23F" },
     { id: "violet", label: "Neon Viola", accent: "#B36CE8", accentInk: "#1B0726", info: "#E8C13F" },
     { id: "orange", label: "Rust Orange", accent: "#F2984A", accentInk: "#2B1300", info: "#4A90CE" },
+    { id: "dark", label: "Dark Mode", accent: "#E8A23F", accentInk: "#0D0D0D", info: "#4F8FA6" },
+    { id: "light", label: "Light Mode", accent: "#3F9CE8", accentInk: "#F5F5F5", info: "#E2472C" },
 ];
 function getThemePreset(id) {
     return THEME_PRESETS.find((t) => t.id === id) || THEME_PRESETS[0];
@@ -425,6 +428,32 @@ const CSS = `
   font-family: var(--font-body);
   min-height: 100vh;
   width: 100%;
+}
+/* DARK THEME */
+.ironlog[data-theme="dark"] {
+  --bg: #0D0D0D;
+  --surface: #1A1A1A;
+  --surface-2: #252525;
+  --text: #E8E8E8;
+  --text-muted: #999999;
+  --accent: #E0E0E0;
+  --accent-ink: #0D0D0D;
+  --danger: #E74C3C;
+  --info: #4A90E2;
+  --border: #333333;
+}
+/* LIGHT THEME */
+.ironlog[data-theme="light"] {
+  --bg: #FFFFFF;
+  --surface: #F5F5F5;
+  --surface-2: #ECECEC;
+  --text: #1A1A1A;
+  --text-muted: #666666;
+  --accent: #3F9CE8;
+  --accent-ink: #F5F5F5;
+  --danger: #E74C3C;
+  --info: #E2472C;
+  --border: #D9D9D9;
 }
 .ironlog .shell {
   max-width: 480px;
@@ -831,8 +860,8 @@ const CSS = `
   border: 1px solid var(--border);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 14px;
-  padding: 9px 8px;
+  font-size: 16px;
+  padding: 11px 8px;
   border-radius: 7px;
   outline: none;
   text-align: center;
@@ -925,7 +954,7 @@ const CSS = `
 }
 .ironlog .timer-rest {
   background: var(--surface);
-  border: 1px solid var(--info);
+  border: 1px solid var(--accent);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -939,13 +968,13 @@ const CSS = `
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--info);
+  color: var(--accent);
 }
 .ironlog .timer-rest-value {
   font-family: var(--font-mono);
   font-weight: 600;
   font-size: 22px;
-  color: var(--info);
+  color: var(--accent);
   letter-spacing: 0.04em;
 }
 .ironlog .timer-rest-btns { display: flex; gap: 6px; }
@@ -955,14 +984,57 @@ const CSS = `
   font-weight: 600;
   padding: 7px 12px;
   border-radius: 8px;
-  border: 1px solid var(--info);
+  border: 1px solid var(--accent);
   background: transparent;
-  color: var(--info);
+  color: var(--accent);
   cursor: pointer;
   letter-spacing: 0.04em;
 }
-.ironlog .timer-btn.active { background: var(--info); color: var(--bg); }
+.ironlog .timer-btn.active { background: var(--accent); color: var(--bg); }
 .ironlog .timer-btn.reset { border-color: var(--border); color: var(--text-muted); }
+.ironlog .timer-combo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ironlog .timer-combo-elapsed { display: flex; flex-direction: column; gap: 2px; }
+.ironlog .timer-combo-elapsed-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ironlog .timer-combo-elapsed-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-muted);
+}
+.ironlog .timer-combo-rest { display: flex; align-items: center; gap: 10px; }
+.ironlog .info-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.ironlog .info-toggle.active { border-color: var(--accent); color: var(--accent); }
+.ironlog .info-panel { display: flex; flex-direction: column; gap: 8px; }
 .ironlog .set-check {
   width: 26px;
   height: 26px;
@@ -1180,6 +1252,20 @@ const CSS = `
   white-space: nowrap;
 }
 .ironlog .diet-day-tag.training { color: var(--accent); border-color: var(--accent); }
+.ironlog .row-card.today { border-color: var(--accent); background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), color-mix(in srgb, var(--surface) 92%, black)); }
+.ironlog .today-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 100px;
+  padding: 2px 7px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.ironlog .diet-kcal.today { font-size: 19px; color: var(--accent); }
 .ironlog .weekday-row { display: flex; gap: 6px; margin-top: 8px; }
 .ironlog .weekday-chip {
   flex: 1;
@@ -1317,6 +1403,149 @@ const CSS = `
 .ironlog .today-card-row span:first-of-type { flex: 1; }
 .ironlog .today-card-arrow { color: var(--accent); font-weight: 700; }
 .ironlog .today-card-empty { color: var(--text-muted); font-size: 13px; font-weight: 400; }
+
+/* ── Hero "Oggi" ──────────────────────────────────────────────────── */
+.ironlog .hero-card {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface));
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.ironlog .hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ironlog .hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+.ironlog .hero-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.ironlog .hero-meta-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 10px;
+}
+.ironlog .hero-cta {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 78%, black));
+  color: var(--accent-ink);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent);
+  cursor: pointer;
+}
+.ironlog .hero-cta:active { transform: scale(0.98); }
+.ironlog .rest-card {
+  background: linear-gradient(135deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 20px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.ironlog .rest-card .hero-eyebrow { justify-content: center; color: var(--text-muted); }
+.ironlog .rest-icon {
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.ironlog .rest-card .hero-title { font-size: 24px; margin-bottom: 4px; }
+.ironlog .rest-sub { color: var(--text-muted); font-size: 13px; }
+.ironlog .kcal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+.ironlog .kcal-card:active { background: var(--surface-2); }
+.ironlog .kcal-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.ironlog .kcal-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  color: var(--accent);
+  line-height: 1;
+}
+.ironlog .kcal-value span { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
+.ironlog .kcal-macros {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  flex-shrink: 0;
+}
+.ironlog .kcal-empty {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+.ironlog .week-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+.ironlog .week-toggle:active { background: var(--surface-2); }
+.ironlog .home-section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
 
 /* ── Serie di avvicinamento ───────────────────────────────────────── */
 .ironlog .warmup-row { opacity: 0.82; }
@@ -1457,6 +1686,7 @@ function App() {
     const [restAccumulated, setRestAccumulated] = useState(0);
     const [restElapsed, setRestElapsed] = useState(0);
     const [sessionChecked, setSessionChecked] = useState({});
+    const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
     const globalTimerRef = useRef(null);
     const restTimerRef = useRef(null);
     useEffect(() => {
@@ -1752,6 +1982,18 @@ function App() {
     function getTodayWeekdayKey() {
         const map = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
         return map[new Date().getDay()];
+    }
+    function getTodayScheduleInfo() {
+        if (days.length === 0)
+            return { kind: "empty" };
+        const todayKey = getTodayWeekdayKey();
+        const hasSchedule = days.some((d) => d.weekday);
+        if (hasSchedule) {
+            const match = days.find((d) => d.weekday === todayKey);
+            return match ? { kind: "training", day: match } : { kind: "rest" };
+        }
+        const suggested = getSuggestedDay();
+        return suggested ? { kind: "training", day: suggested } : { kind: "empty" };
     }
     function addDay(name) {
         if (days.length >= MAX_DAYS)
@@ -2171,22 +2413,48 @@ function App() {
     }
     function renderHomeTodo() {
         const week = getIsoWeek(new Date());
-        const suggestedDay = getSuggestedDay();
+        const schedule = getTodayScheduleInfo();
         const todayDiet = getWeekDietTargets(diet).find((t) => t.key === getTodayWeekdayKey());
+        const todayLabel = weekdayShortLabel(getTodayWeekdayKey());
         return (React.createElement("div", { className: "content" },
-            (suggestedDay || (todayDiet && todayDiet.kcal !== null)) && (React.createElement("div", { className: "today-card" },
-                React.createElement("div", { className: "today-card-label" }, "Oggi"),
-                React.createElement("div", { className: "today-card-body" },
-                    suggestedDay && (React.createElement("div", { className: "today-card-row clickable", onClick: () => openDay(suggestedDay.id) },
-                        React.createElement(IcoFlame, { size: 16 }),
-                        React.createElement("span", null, suggestedDay.name),
-                        React.createElement("span", { className: "today-card-arrow" }, "\u2192"))),
-                    todayDiet && todayDiet.kcal !== null && (React.createElement("div", { className: "today-card-row clickable", onClick: openDiet },
-                        React.createElement(IcoApple, { size: 16 }),
-                        React.createElement("span", null, `${todayDiet.kcal} kcal target`),
-                        React.createElement("span", { className: "today-card-arrow" }, "\u2192")))))),
-            React.createElement("div", { className: "week-pill" },
-                "Settimana ",
+            schedule.kind === "training" && (React.createElement("div", { className: "hero-card" },
+                React.createElement("div", { className: "hero-eyebrow" },
+                    React.createElement(IcoFlame, { size: 14 }),
+                    "Oggi \u00B7 ",
+                    todayLabel),
+                React.createElement("div", { className: "hero-title" }, schedule.day.name),
+                React.createElement("div", { className: "hero-meta" },
+                    React.createElement("span", { className: "hero-meta-chip" },
+                        schedule.day.exercises.length,
+                        " esercizi")),
+                React.createElement("button", { className: "hero-cta", onClick: () => openDay(schedule.day.id) }, "Vai all\u2019allenamento"))),
+            schedule.kind === "rest" && (React.createElement("div", { className: "rest-card" },
+                React.createElement("div", { className: "hero-eyebrow" },
+                    "Oggi \u00B7 ",
+                    todayLabel),
+                React.createElement("div", { className: "rest-icon" },
+                    React.createElement(IcoMoon, { size: 30 })),
+                React.createElement("div", { className: "hero-title" }, "Giorno di riposo"),
+                React.createElement("div", { className: "rest-sub" }, "Nessun allenamento programmato per oggi"))),
+            schedule.kind === "empty" && (React.createElement("div", { className: "rest-card" },
+                React.createElement("div", { className: "hero-eyebrow" }, "Oggi"),
+                React.createElement("div", { className: "hero-title" }, "Nessuna scheda"),
+                React.createElement("div", { className: "rest-sub" }, "Crea il primo giorno di allenamento qui sotto"))),
+            todayDiet && todayDiet.kcal !== null ? (React.createElement("div", { className: "kcal-card", onClick: openDiet },
+                React.createElement("div", null,
+                    React.createElement("div", { className: "kcal-label" }, "Target di oggi"),
+                    React.createElement("div", { className: "kcal-value" },
+                        todayDiet.kcal,
+                        React.createElement("span", null, "kcal"))),
+                React.createElement("div", { className: "kcal-macros" },
+                    todayDiet.p, "g P", React.createElement("br", null),
+                    todayDiet.c, "g C", React.createElement("br", null),
+                    todayDiet.f, "g G"))) : (React.createElement("div", { className: "kcal-empty", onClick: openDiet }, "Imposta la dieta per vedere le kcal target di oggi \u2192")),
+            React.createElement("button", { className: "week-toggle", onClick: openDiet },
+                React.createElement(IcoCalendar, { size: 15 }),
+                "Panoramica settimanale"),
+            React.createElement("div", { className: "home-section-label" },
+                "Tutti i giorni \u00B7 settimana ",
                 week.week,
                 " \u00B7 ",
                 week.year),
@@ -2620,57 +2888,61 @@ function App() {
                     persistNav({ screen: "day", tab, dayId });
                 } }),
             React.createElement("div", { className: "content session-screen" },
-                React.createElement("div", { className: "timer-global" },
-                    React.createElement("div", null,
-                        React.createElement("div", { className: "timer-global-label" }, "Allenamento iniziato da"),
-                        React.createElement("div", { className: "timer-global-value" }, fmtTime(sessionElapsed)))),
-                React.createElement("div", { className: "timer-rest" },
-                    React.createElement("div", { className: "timer-rest-left" },
-                        React.createElement("div", { className: "timer-rest-label" }, "Recupero"),
-                        React.createElement("div", { className: "timer-rest-value" }, fmtTime(restElapsed))),
-                    React.createElement("div", { className: "timer-rest-btns" },
-                        React.createElement("button", { className: "timer-btn" + (restRunning ? " active" : ""), onClick: () => {
-                                if (restRunning) {
-                                    const extra = restStartedAt !== null ? Math.floor((Date.now() - restStartedAt) / 1000) : 0;
-                                    const newAccum = restAccumulated + extra;
-                                    setRestAccumulated(newAccum);
+                React.createElement("div", { className: "timer-combo" },
+                    React.createElement("div", { className: "timer-combo-elapsed" },
+                        React.createElement("div", { className: "timer-combo-elapsed-label" }, "Allenamento"),
+                        React.createElement("div", { className: "timer-combo-elapsed-value" }, fmtTime(sessionElapsed))),
+                    React.createElement("div", { className: "timer-combo-rest" },
+                        React.createElement("div", { className: "timer-rest-left" },
+                            React.createElement("div", { className: "timer-rest-label" }, "Recupero"),
+                            React.createElement("div", { className: "timer-rest-value" }, fmtTime(restElapsed))),
+                        React.createElement("div", { className: "timer-rest-btns" },
+                            React.createElement("button", { className: "timer-btn" + (restRunning ? " active" : ""), onClick: () => {
+                                    if (restRunning) {
+                                        const extra = restStartedAt !== null ? Math.floor((Date.now() - restStartedAt) / 1000) : 0;
+                                        const newAccum = restAccumulated + extra;
+                                        setRestAccumulated(newAccum);
+                                        setRestRunning(false);
+                                        setRestStartedAt(null);
+                                        persistNav({ restRunning: false, restStartedAt: null, restAccumulated: newAccum });
+                                    }
+                                    else {
+                                        const now = Date.now();
+                                        setRestStartedAt(now);
+                                        setRestRunning(true);
+                                        persistNav({ restRunning: true, restStartedAt: now, restAccumulated });
+                                    }
+                                } }, restRunning ? "Pausa" : "Start"),
+                            React.createElement("button", { className: "timer-btn reset", onClick: () => {
                                     setRestRunning(false);
                                     setRestStartedAt(null);
-                                    persistNav({ restRunning: false, restStartedAt: null, restAccumulated: newAccum });
-                                }
-                                else {
-                                    const now = Date.now();
-                                    setRestStartedAt(now);
-                                    setRestRunning(true);
-                                    persistNav({ restRunning: true, restStartedAt: now, restAccumulated });
-                                }
-                            } }, restRunning ? "Pausa" : "Start"),
-                        React.createElement("button", { className: "timer-btn reset", onClick: () => {
-                                setRestRunning(false);
-                                setRestStartedAt(null);
-                                setRestAccumulated(0);
-                                setRestElapsed(0);
-                                persistNav({ restRunning: false, restStartedAt: null, restAccumulated: 0 });
-                            } }, "Reset"))),
+                                    setRestAccumulated(0);
+                                    setRestElapsed(0);
+                                    persistNav({ restRunning: false, restStartedAt: null, restAccumulated: 0 });
+                                } }, "Reset")))),
                 React.createElement("div", { className: "session-ex-name" }, ex.name),
                 (ex.targetSets || ex.targetReps) && (React.createElement("div", { className: "target-pill" },
                     "Obiettivo: ",
                     ex.targetSets || "–",
                     " \u00D7 ",
                     ex.targetReps || "–")),
-                ex.description ? (React.createElement("div", { className: "note-card ex-desc" },
-                    React.createElement("div", { className: "note-card-label" }, "Note esercizio"),
-                    ex.description)) : null,
-                prev && (React.createElement("div", { className: "session-prev" },
-                    "Ultima volta (",
-                    formatDate(prev.date),
-                    "): ",
-                    prev.sets.map((s, i) => `S${i + 1} ${s.weight || "—"}kg×${s.reps || "—"}`).join("  ·  "))),
-                prev && prev.note ? (React.createElement("div", { className: "note-card prev-note" },
-                    React.createElement("div", { className: "note-card-label" },
-                        "Nota sessione precedente \u00B7 ",
-                        formatDate(prev.date)),
-                    prev.note)) : null,
+                (ex.description || (prev && prev.note)) && (React.createElement("button", { className: "info-toggle" + (sessionInfoOpen ? " active" : ""), onClick: () => setSessionInfoOpen(!sessionInfoOpen) },
+                    "Note ed esercizio precedente ",
+                    sessionInfoOpen ? "\u2191" : "\u2193")),
+                sessionInfoOpen && (React.createElement("div", { className: "info-panel" },
+                    ex.description ? (React.createElement("div", { className: "note-card ex-desc" },
+                        React.createElement("div", { className: "note-card-label" }, "Note esercizio"),
+                        ex.description)) : null,
+                    prev && (React.createElement("div", { className: "session-prev" },
+                        "Ultima volta (",
+                        formatDate(prev.date),
+                        "): ",
+                        prev.sets.map((s, i) => `S${i + 1} ${s.weight || "—"}kg×${s.reps || "—"}`).join("  ·  "))),
+                    prev && prev.note ? (React.createElement("div", { className: "note-card prev-note" },
+                        React.createElement("div", { className: "note-card-label" },
+                            "Nota sessione precedente \u00B7 ",
+                            formatDate(prev.date)),
+                        prev.note)) : null)),
                 React.createElement("div", { className: "sets-table" },
                     ex.sets.length > 0 && (React.createElement("div", { className: "set-header", style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
                         React.createElement("span", null, "#"),
@@ -2898,12 +3170,15 @@ function App() {
                     "Nessun piano impostato ancora.",
                     React.createElement("br", null),
                     "Premi \u201CImposta dieta\u201D per iniziare.")),
-                hasAnyData && (React.createElement("div", { className: "list" }, week.map((d) => (React.createElement("div", { className: "row-card", key: d.key },
-                    React.createElement("div", { className: "row-main" },
-                        React.createElement("div", { className: "row-title" }, d.label),
-                        React.createElement("div", { className: "row-sub" }, d.kcal !== null ? `${d.p}g P \u00B7 ${d.c}g C \u00B7 ${d.f}g G` : "Non impostato")),
-                    d.isTraining !== null && d.kcal !== null && (React.createElement("span", { className: "diet-day-tag" + (d.isTraining ? " training" : "") }, d.isTraining ? "Allenamento" : "Riposo")),
-                    React.createElement("div", { className: "diet-kcal" }, d.kcal !== null ? d.kcal : "\u2014")))))),
+                hasAnyData && (React.createElement("div", { className: "list" }, week.map((d) => {
+                    const isToday = d.key === getTodayWeekdayKey();
+                    return (React.createElement("div", { className: "row-card" + (isToday ? " today" : ""), key: d.key },
+                        React.createElement("div", { className: "row-main" },
+                            React.createElement("div", { className: "row-title" }, d.label, isToday && React.createElement("span", { className: "today-tag" }, "Oggi")),
+                            React.createElement("div", { className: "row-sub" }, d.kcal !== null ? `${d.p}g P \u00B7 ${d.c}g C \u00B7 ${d.f}g G` : "Non impostato")),
+                        d.isTraining !== null && d.kcal !== null && (React.createElement("span", { className: "diet-day-tag" + (d.isTraining ? " training" : "") }, d.isTraining ? "Allenamento" : "Riposo")),
+                        React.createElement("div", { className: "diet-kcal" + (isToday ? " today" : "") }, d.kcal !== null ? d.kcal : "\u2014")));
+                }))),
                 React.createElement("div", { className: "section-label", style: { marginTop: 20 } }, "Andamento peso / BF"),
                 chartData.length >= 2 ? (React.createElement("div", { className: "compare-card" },
                     React.createElement("div", { className: "compare-head" },
@@ -3066,7 +3341,12 @@ function App() {
     else if (screen === "autoSplit")
         body = renderAutoSplit();
     const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab, dietSettingsMode, splitDayCount, confirmApplySplit, supplementsDayKey].join("|");
-    return (React.createElement("div", { className: "ironlog", style: { "--accent": themePreset.accent, "--accent-ink": themePreset.accentInk, "--info": themePreset.info } },
+    const themeVars = () => {
+        if (theme === "dark") return { "--bg": "#0D0D0D", "--surface": "#1A1A1A", "--surface-2": "#252525", "--text": "#E8E8E8", "--text-muted": "#999999", "--accent": "#E0E0E0", "--accent-ink": "#0D0D0D", "--danger": "#E74C3C", "--info": "#4A90E2", "--border": "#333333" };
+        if (theme === "light") return { "--bg": "#FFFFFF", "--surface": "#F5F5F5", "--surface-2": "#ECECEC", "--text": "#1A1A1A", "--text-muted": "#666666", "--accent": "#3F9CE8", "--accent-ink": "#F5F5F5", "--danger": "#E74C3C", "--info": "#E2472C", "--border": "#D9D9D9" };
+        return { "--accent": themePreset.accent, "--accent-ink": themePreset.accentInk, "--info": themePreset.info };
+    };
+    return (React.createElement("div", { className: "ironlog", "data-theme": theme, style: themeVars() },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" },
             React.createElement("div", { className: "screen-anim", key: animKey }, body),
