@@ -224,6 +224,15 @@ const WEEKDAYS = [
     { key: "sat", label: "Sabato", short: "Sab" },
     { key: "sun", label: "Domenica", short: "Dom" },
 ];
+function weekdayShortLabel(key) {
+    const w = WEEKDAYS.find((x) => x.key === key);
+    return w ? w.short : null;
+}
+function emptySupplements() {
+    const s = {};
+    WEEKDAYS.forEach((w) => { s[w.key] = []; });
+    return s;
+}
 function emptyDiet() {
     const manualMacros = {};
     WEEKDAYS.forEach((w) => { manualMacros[w.key] = { p: "", c: "", f: "" }; });
@@ -232,6 +241,7 @@ function emptyDiet() {
         profile: { heightCm: "", weightKg: "", bfPercent: "", activity: "moderato", goal: "mantenimento" },
         trainingDays: { mon: true, tue: false, wed: true, thu: false, fri: true, sat: false, sun: false },
         manualMacros,
+        supplements: emptySupplements(),
     };
 }
 // ── Temi colore ──────────────────────────────────────────────────────
@@ -1423,11 +1433,18 @@ function App() {
     const [dietTrainingDraft, setDietTrainingDraft] = useState(null);
     const [dietManualDraft, setDietManualDraft] = useState(null);
     const [dietChartField, setDietChartField] = useState("weight");
+    const [supplementsDayKey, setSupplementsDayKey] = useState(null);
+    const [addingSupplement, setAddingSupplement] = useState(false);
+    const [supplementDraftName, setSupplementDraftName] = useState("");
+    const [editingSupplementId, setEditingSupplementId] = useState(null);
+    const [editingSupplementName, setEditingSupplementName] = useState("");
+    const [confirmDeleteSupplement, setConfirmDeleteSupplement] = useState(null);
     // ── Creazione automatica scheda ───────────────────────────────────
     const [splitDayCount, setSplitDayCount] = useState(3);
     const [confirmApplySplit, setConfirmApplySplit] = useState(false);
     const [themePickerOpen, setThemePickerOpen] = useState(false);
     const [reorderDayId, setReorderDayId] = useState(null);
+    const [weekdayPickerDayId, setWeekdayPickerDayId] = useState(null);
     const [installPromptReady, setInstallPromptReady] = useState(false);
     const [undoState, setUndoState] = useState(null);
     const undoTimerRef = useRef(null);
@@ -1451,7 +1468,7 @@ function App() {
                 ]);
                 if (dataRes && dataRes.value) {
                     const parsed = JSON.parse(dataRes.value);
-                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet || emptyDiet(), theme: parsed.theme || "gold", lastBackupAt: parsed.lastBackupAt || null, lastBackupSnoozeAt: parsed.lastBackupSnoozeAt || null });
+                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet ? Object.assign({ supplements: emptySupplements() }, parsed.diet) : emptyDiet(), theme: parsed.theme || "gold", lastBackupAt: parsed.lastBackupAt || null, lastBackupSnoozeAt: parsed.lastBackupSnoozeAt || null });
                 }
                 if (navRes && navRes.value) {
                     const nav = JSON.parse(navRes.value);
@@ -1549,7 +1566,7 @@ function App() {
     const days = appState.days;
     const history = appState.history;
     const measurements = appState.measurements || [];
-    const diet = appState.diet || emptyDiet();
+    const diet = Object.assign({ supplements: emptySupplements() }, appState.diet || emptyDiet());
     const theme = appState.theme || "gold";
     const themePreset = getThemePreset(theme);
     const DAY_MS = 24 * 3600 * 1000;
@@ -1709,6 +1726,10 @@ function App() {
     function getSuggestedDay() {
         if (days.length === 0)
             return null;
+        const todayKey = getTodayWeekdayKey();
+        const todayMatch = days.find((d) => d.weekday === todayKey);
+        if (todayMatch)
+            return todayMatch;
         if (history.length === 0)
             return days[0];
         const lastIdx = days.findIndex((d) => d.id === history[0].dayId);
@@ -1726,7 +1747,7 @@ function App() {
         const trimmed = name.trim();
         if (!trimmed)
             return;
-        const newDay = { id: uid(), name: trimmed, exercises: [] };
+        const newDay = { id: uid(), name: trimmed, exercises: [], weekday: null };
         persist(Object.assign(Object.assign({}, appState), { days: [...days, newDay] }));
         setAddingDay(false);
         setDayDraftName("");
@@ -1737,6 +1758,19 @@ function App() {
             return;
         persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => (d.id === id ? Object.assign(Object.assign({}, d), { name: trimmed }) : d)) }));
         setEditingDayId(null);
+    }
+    function setDayWeekday(id, key) {
+        const day = days.find((d) => d.id === id);
+        if (!day)
+            return;
+        const nextKey = day.weekday === key ? null : key;
+        const nextDiet = nextKey
+            ? Object.assign(Object.assign({}, diet), { trainingDays: Object.assign(Object.assign({}, diet.trainingDays), { [nextKey]: true }) })
+            : diet;
+        persist(Object.assign(Object.assign({}, appState), {
+            days: days.map((d) => (d.id === id ? Object.assign(Object.assign({}, d), { weekday: nextKey }) : d)),
+            diet: nextDiet,
+        }));
     }
     function moveDayToPosition(id, pos) {
         const idx = days.findIndex((d) => d.id === id);
@@ -1997,6 +2031,7 @@ function App() {
             profile: dietProfileDraft,
             trainingDays: dietTrainingDraft,
             manualMacros: dietManualDraft,
+            supplements: diet.supplements,
         };
         let nextMeasurements = measurements;
         if (dietSettingsMode === "auto") {
@@ -2009,6 +2044,47 @@ function App() {
         persist(Object.assign(Object.assign({}, appState), { diet: nextDiet, measurements: nextMeasurements }));
         setScreen("diet");
         persistNav({ screen: "diet", tab });
+    }
+    function openSupplements() {
+        setSupplementsDayKey((prev) => prev || getTodayWeekdayKey());
+        setAddingSupplement(false);
+        setSupplementDraftName("");
+        setEditingSupplementId(null);
+        setConfirmDeleteSupplement(null);
+        setScreen("supplements");
+        persistNav({ screen: "supplements", tab });
+    }
+    function addSupplement(dayKey, name) {
+        const trimmed = name.trim();
+        if (!trimmed)
+            return;
+        const list = diet.supplements[dayKey] || [];
+        const nextDiet = Object.assign(Object.assign({}, diet), { supplements: Object.assign(Object.assign({}, diet.supplements), { [dayKey]: [...list, { id: uid(), name: trimmed }] }) });
+        persist(Object.assign(Object.assign({}, appState), { diet: nextDiet }));
+        setAddingSupplement(false);
+        setSupplementDraftName("");
+    }
+    function renameSupplement(dayKey, id, name) {
+        const trimmed = name.trim();
+        if (!trimmed)
+            return;
+        const list = diet.supplements[dayKey] || [];
+        const nextDiet = Object.assign(Object.assign({}, diet), { supplements: Object.assign(Object.assign({}, diet.supplements), { [dayKey]: list.map((s) => (s.id === id ? Object.assign(Object.assign({}, s), { name: trimmed }) : s)) }) });
+        persist(Object.assign(Object.assign({}, appState), { diet: nextDiet }));
+        setEditingSupplementId(null);
+    }
+    function removeSupplement(dayKey, id) {
+        const list = diet.supplements[dayKey] || [];
+        const nextDiet = Object.assign(Object.assign({}, diet), { supplements: Object.assign(Object.assign({}, diet.supplements), { [dayKey]: list.filter((s) => s.id !== id) }) });
+        persist(Object.assign(Object.assign({}, appState), { diet: nextDiet }));
+        setConfirmDeleteSupplement(null);
+    }
+    function copySupplementsToAllDays(dayKey) {
+        const list = diet.supplements[dayKey] || [];
+        const nextSupplements = {};
+        WEEKDAYS.forEach((w) => { nextSupplements[w.key] = w.key === dayKey ? list : list.map((s) => (Object.assign(Object.assign({}, s), { id: uid() }))); });
+        const nextDiet = Object.assign(Object.assign({}, diet), { supplements: nextSupplements });
+        persist(Object.assign(Object.assign({}, appState), { diet: nextDiet }));
     }
     // ── Temi colore ─────────────────────────────────────────────────
     function setThemeChoice(id) {
@@ -2128,7 +2204,8 @@ function App() {
                     React.createElement("div", { className: "row-title" }, d.name),
                     React.createElement("div", { className: "row-sub" },
                         d.exercises.length,
-                        " esercizi")),
+                        " esercizi",
+                        d.weekday ? ` · ${weekdayShortLabel(d.weekday)}` : "")),
                 React.createElement("div", { className: "row-actions" },
                     React.createElement("button", { className: "icon-btn", onClick: (e) => { e.stopPropagation(); setEditingDayId(d.id); setEditingDayName(d.name); } },
                         React.createElement(IcoPencil, { size: 15 })),
@@ -2247,14 +2324,20 @@ function App() {
                         React.createElement("div", { className: "row-title" }, d.name),
                         React.createElement("div", { className: "row-sub" },
                             d.exercises.length,
-                            " esercizi")),
+                            " esercizi",
+                            d.weekday ? ` · ${weekdayShortLabel(d.weekday)}` : " · Nessun giorno")),
                     React.createElement("div", { className: "row-actions" },
+                        React.createElement("button", { className: "icon-btn" + (weekdayPickerDayId === d.id ? " active" : ""), onClick: (e) => { e.stopPropagation(); setWeekdayPickerDayId(weekdayPickerDayId === d.id ? null : d.id); } },
+                            React.createElement(IcoCalendar, { size: 15 })),
                         React.createElement("button", { className: "icon-btn" + (reorderDayId === d.id ? " active" : ""), onClick: (e) => { e.stopPropagation(); setReorderDayId(reorderDayId === d.id ? null : d.id); } },
                             React.createElement(IcoMove, { size: 15 })),
                         React.createElement("button", { className: "icon-btn", onClick: (e) => { e.stopPropagation(); setEditingDayId(d.id); setEditingDayName(d.name); } },
                             React.createElement(IcoPencil, { size: 15 })),
                         React.createElement("button", { className: "icon-btn danger", onClick: (e) => { e.stopPropagation(); setConfirmDeleteDay(d.id); } },
                             React.createElement(IcoTrash, { size: 15 }))))),
+                weekdayPickerDayId === d.id && (React.createElement("div", { className: "reorder-picker" },
+                    React.createElement("span", { className: "reorder-picker-label" }, "Giorno della settimana:"),
+                    React.createElement("div", { className: "weekday-row", style: { marginTop: 6 } }, WEEKDAYS.map((w) => (React.createElement("button", { key: w.key, className: "weekday-chip" + (d.weekday === w.key ? " active" : ""), onClick: () => setDayWeekday(d.id, w.key) }, w.short[0])))))),
                 reorderDayId === d.id && (React.createElement("div", { className: "reorder-picker" },
                     React.createElement("span", { className: "reorder-picker-label" }, "Sposta in posizione:"),
                     React.createElement("div", { className: "reorder-picker-chips" }, days.map((_, pos) => (React.createElement("button", { key: pos, className: "reorder-chip" + (pos === i ? " current" : ""), onClick: () => moveDayToPosition(d.id, pos + 1) }, pos + 1)))))),
@@ -2794,6 +2877,7 @@ function App() {
             React.createElement(Header, { title: "Alimentazione", onBack: () => goHome(tab) }),
             React.createElement("div", { className: "content" },
                 React.createElement("button", { className: "btn primary full", style: { marginBottom: 16 }, onClick: openDietSettings }, "Imposta dieta"),
+                React.createElement("button", { className: "btn ghost full", style: { marginBottom: 16 }, onClick: openSupplements }, "Integrazione"),
                 !hasAnyData && (React.createElement("div", { className: "empty-state" },
                     "Nessun piano impostato ancora.",
                     React.createElement("br", null),
@@ -2865,6 +2949,49 @@ function App() {
                 React.createElement("div", { style: { marginTop: 18 } }, dietSettingsMode === "auto" ? renderDietAutoForm(auto) : renderDietManualForm()),
                 React.createElement("button", { className: "btn primary full", style: { marginTop: 20 }, onClick: saveDietSettings }, "Salva"))));
     }
+    function renderSupplements() {
+        const dayKey = supplementsDayKey || getTodayWeekdayKey();
+        const list = diet.supplements[dayKey] || [];
+        return (React.createElement(React.Fragment, null,
+            React.createElement(Header, { title: "Integrazione", onBack: () => { setScreen("diet"); persistNav({ screen: "diet", tab }); } }),
+            React.createElement("div", { className: "content" },
+                React.createElement("div", { className: "weekday-row" }, WEEKDAYS.map((w) => (React.createElement("button", { key: w.key, className: "weekday-chip" + (dayKey === w.key ? " active" : ""), onClick: () => { setSupplementsDayKey(w.key); setAddingSupplement(false); setEditingSupplementId(null); setConfirmDeleteSupplement(null); } }, w.short[0])))),
+                React.createElement("div", { className: "section-label", style: { marginTop: 18 } }, `Integratori \u2013 ${weekdayShortLabel(dayKey) ? WEEKDAYS.find((w) => w.key === dayKey).label : ""}`),
+                list.length === 0 && !addingSupplement && (React.createElement("div", { className: "empty-state" },
+                    "Nessun integratore per questo giorno.",
+                    React.createElement("br", null),
+                    "Premi \u201CAggiungi integratore\u201D per crearne uno.")),
+                React.createElement("div", { className: "list" }, list.map((s) => (React.createElement("div", { key: s.id }, editingSupplementId === s.id ? (React.createElement("div", { className: "add-form" },
+                    React.createElement("div", { className: "add-form-head" },
+                        React.createElement("input", { className: "input-text", autoFocus: true, value: editingSupplementName, onChange: (e) => setEditingSupplementName(e.target.value), placeholder: "Nome integratore" })),
+                    React.createElement("div", { className: "form-actions" },
+                        React.createElement("button", { className: "btn ghost", onClick: () => setEditingSupplementId(null) }, "Annulla"),
+                        React.createElement("button", { className: "btn primary", disabled: !editingSupplementName.trim(), onClick: () => renameSupplement(dayKey, s.id, editingSupplementName) }, "Salva")))) : confirmDeleteSupplement === s.id ? (React.createElement("div", { className: "row-card" },
+                    React.createElement("div", { className: "confirm-row" },
+                        React.createElement("span", { className: "confirm-text" }, `Eliminare \u201C${s.name}\u201D?`),
+                        React.createElement("div", { className: "confirm-actions" },
+                            React.createElement("button", { className: "icon-btn", onClick: () => setConfirmDeleteSupplement(null) },
+                                React.createElement(IcoX, { size: 16 })),
+                            React.createElement("button", { className: "icon-btn danger", onClick: () => removeSupplement(dayKey, s.id) },
+                                React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "row-card" },
+                    React.createElement(IcoApple, { size: 16 }),
+                    React.createElement("div", { className: "row-main" },
+                        React.createElement("div", { className: "row-title" }, s.name)),
+                    React.createElement("div", { className: "row-actions" },
+                        React.createElement("button", { className: "icon-btn", onClick: () => { setEditingSupplementId(s.id); setEditingSupplementName(s.name); } },
+                            React.createElement(IcoPencil, { size: 15 })),
+                        React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSupplement(s.id) },
+                            React.createElement(IcoTrash, { size: 15 }))))))))),
+                addingSupplement ? (React.createElement("div", { className: "add-form" },
+                    React.createElement("div", { className: "add-form-head" },
+                        React.createElement("input", { className: "input-text", autoFocus: true, value: supplementDraftName, onChange: (e) => setSupplementDraftName(e.target.value), placeholder: "Es. Creatina 5g" })),
+                    React.createElement("div", { className: "form-actions" },
+                        React.createElement("button", { className: "btn ghost", onClick: () => { setAddingSupplement(false); setSupplementDraftName(""); } }, "Annulla"),
+                        React.createElement("button", { className: "btn primary", disabled: !supplementDraftName.trim(), onClick: () => addSupplement(dayKey, supplementDraftName) }, "Crea")))) : (React.createElement("button", { className: "add-trigger", onClick: () => setAddingSupplement(true) },
+                    React.createElement(IcoPlus, { size: 16 }),
+                    " Aggiungi integratore")),
+                list.length > 0 && (React.createElement("button", { className: "btn ghost full", style: { marginTop: 16 }, onClick: () => copySupplementsToAllDays(dayKey) }, "Copia su tutti i giorni")))));
+    }
     // ── Creazione automatica scheda ────────────────────────────────────
     function renderAutoSplit() {
         const preview = generateSplitDays(splitDayCount);
@@ -2918,9 +3045,11 @@ function App() {
         body = renderDiet();
     else if (screen === "dietSettings")
         body = renderDietSettings();
+    else if (screen === "supplements")
+        body = renderSupplements();
     else if (screen === "autoSplit")
         body = renderAutoSplit();
-    const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab, dietSettingsMode, splitDayCount, confirmApplySplit].join("|");
+    const animKey = [screen, tab, dayId, exerciseId, historyId, historyExIdx, sessionIdx, statsTab, dietSettingsMode, splitDayCount, confirmApplySplit, supplementsDayKey].join("|");
     return (React.createElement("div", { className: "ironlog", style: { "--accent": themePreset.accent, "--accent-ink": themePreset.accentInk, "--info": themePreset.info } },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" },
