@@ -1644,7 +1644,13 @@ function App() {
                     return;
                 }
                 setImportError(null);
-                setImportPreview({ days: parsed.days, history: parsed.history });
+                setImportPreview({
+                    days: parsed.days,
+                    history: parsed.history,
+                    measurements: Array.isArray(parsed.measurements) ? parsed.measurements : [],
+                    diet: parsed.diet ? Object.assign({ supplements: emptySupplements() }, parsed.diet) : null,
+                    theme: parsed.theme || null,
+                });
             }
             catch (err) {
                 setImportError("Impossibile leggere il file selezionato.");
@@ -1661,12 +1667,18 @@ function App() {
         if (!importPreview)
             return;
         if (mode === "replace") {
-            persist({ days: importPreview.days, history: importPreview.history });
+            persist(Object.assign(Object.assign({}, appState), {
+                days: importPreview.days,
+                history: importPreview.history,
+                measurements: importPreview.measurements,
+                diet: importPreview.diet || appState.diet,
+                theme: importPreview.theme || appState.theme,
+            }));
         }
         else {
             const room = Math.max(0, MAX_DAYS - days.length);
             const daysToAdd = importPreview.days.slice(0, room);
-            persist(Object.assign(Object.assign({}, appState), { days: [...days, ...daysToAdd], history: [...history, ...importPreview.history] }));
+            persist(Object.assign(Object.assign({}, appState), { days: [...days, ...daysToAdd], history: [...history, ...importPreview.history], measurements: [...measurements, ...importPreview.measurements] }));
         }
         setImportPreview(null);
     }
@@ -2284,7 +2296,10 @@ function App() {
                     importPreview.days.length,
                     " giorni \u00B7 ",
                     importPreview.history.length,
-                    " sessioni nello storico"),
+                    " sessioni nello storico \u00B7 ",
+                    importPreview.measurements.length,
+                    " misure"),
+                React.createElement("div", { className: "row-sub" }, importPreview.diet ? "Include impostazioni alimentazione e integrazione." : "Nessun dato di alimentazione nel file."),
                 days.length + importPreview.days.length > MAX_DAYS && (React.createElement("div", { className: "row-sub", style: { color: "var(--info)" } },
                     "Hai gi\u00E0 ",
                     days.length,
@@ -2293,6 +2308,7 @@ function App() {
                     " per restare entro il limite di ",
                     MAX_DAYS,
                     ".")),
+                React.createElement("div", { className: "row-sub", style: { color: "var(--info)" } }, "\u201CSostituisci tutto\u201D sovrascrive anche dieta e integrazione attuali. \u201CAggiungi\u201D mantiene la tua dieta/integrazione attuale."),
                 React.createElement("div", { className: "form-actions", style: { flexWrap: "wrap" } },
                     React.createElement("button", { className: "btn ghost", onClick: () => setImportPreview(null) }, "Annulla"),
                     React.createElement("button", { className: "btn danger", onClick: () => confirmImport("replace") }, "Sostituisci tutto"),
