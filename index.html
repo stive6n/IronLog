@@ -16,19 +16,37 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    html,body{background:#1E1B18;height:100%;}
+    html,body{background:#000;height:100%;}
     #root{height:100%;}
-    #loading{display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;
-             height:100vh;background:#1E1B18;font-family:sans-serif;color:#D9A53D;font-size:16px;}
-    #errmsg{display:none;color:#B5482F;font-size:13px;max-width:320px;text-align:center;line-height:1.5;}
+    #loading{display:flex;flex-direction:column;gap:20px;align-items:center;justify-content:center;
+             height:100vh;background:#000;font-family:'Work Sans',sans-serif;color:#fff;}
+    #loading .logo-mark{width:60px;height:60px;animation:loadingPulse 1.8s ease-in-out infinite;}
+    #loading .logo-title{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;letter-spacing:0.2em;
+             color:#fff;text-transform:uppercase;}
+    #loading .logo-bar{width:44px;height:2px;background:#D9A53D;border-radius:2px;}
+    #loading .logo-sub{font-size:13px;letter-spacing:0.04em;color:#8a8a8a;display:flex;gap:2px;}
+    #loading .logo-sub .dots span{display:inline-block;animation:dotBlink 1.4s infinite;opacity:0.2;}
+    #loading .logo-sub .dots span:nth-child(2){animation-delay:0.2s;}
+    #loading .logo-sub .dots span:nth-child(3){animation-delay:0.4s;}
+    @keyframes loadingPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.07);opacity:0.85;}}
+    @keyframes dotBlink{0%,80%,100%{opacity:0.2;}40%{opacity:1;}}
+    #errmsg{display:none;color:#E07A5F;font-size:13px;max-width:320px;text-align:center;line-height:1.5;margin-top:4px;}
   </style>
 </head>
 <body>
   <div id="loading">
-    <span style="font-size:24px;font-family:sans-serif;font-weight:700;letter-spacing:0.05em">⚑ IRONLOG</span>
-    <span style="color:#9A9088;font-size:13px">Caricamento…</span>
+    <svg class="logo-mark" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="24" width="7" height="16" rx="2" fill="#fff"/>
+      <rect x="11" y="20" width="5" height="24" rx="2" fill="#fff"/>
+      <rect x="48" y="20" width="5" height="24" rx="2" fill="#fff"/>
+      <rect x="55" y="24" width="7" height="16" rx="2" fill="#fff"/>
+      <rect x="16" y="30" width="32" height="4" rx="2" fill="#D9A53D"/>
+    </svg>
+    <span class="logo-title">Iron Log</span>
+    <span class="logo-bar"></span>
+    <span class="logo-sub">Caricamento<span class="dots"><span>.</span><span>.</span><span>.</span></span></span>
     <span id="errmsg"></span>
-    <button id="retryBtn" style="display:none;margin-top:8px;padding:8px 16px;background:#D9A53D;color:#1E1B18;border:none;border-radius:6px;font-weight:600;font-size:13px" onclick="location.reload()">Ricarica</button>
+    <button id="retryBtn" style="display:none;margin-top:8px;padding:10px 20px;background:#D9A53D;color:#1a1a1a;border:none;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:0.03em;cursor:pointer;font-family:'Work Sans',sans-serif" onclick="location.reload()">Ricarica</button>
   </div>
   <div id="root"></div>
   <script>
@@ -637,6 +655,38 @@ const CSS = `
 }
 .ironlog .row-card.clickable { cursor: pointer; }
 .ironlog .row-card.clickable:active { background: var(--surface-2); transform: scale(0.99); }
+.ironlog .progress-link-card {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--surface)), color-mix(in srgb, var(--surface) 94%, black));
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--border));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+  transition: transform 0.12s ease;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.ironlog .progress-link-card:active { transform: scale(0.98); }
+.ironlog .progress-link-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.ironlog .progress-link-text { flex: 1; min-width: 0; }
+.ironlog .progress-link-title { font-weight: 700; font-size: 15px; color: var(--text); }
+.ironlog .progress-link-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.ironlog .progress-link-chevron { color: var(--accent); flex-shrink: 0; }
 .ironlog .plate-badge {
   width: 36px;
   height: 36px;
@@ -1187,52 +1237,6 @@ const CSS = `
   color: var(--text-muted);
   text-align: center;
 }
-.ironlog .heatmap-scroll {
-  overflow-x: auto;
-  padding-bottom: 4px;
-  margin: 0 -16px;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-.ironlog .heatmap-grid {
-  display: flex;
-  gap: 3px;
-  width: max-content;
-}
-.ironlog .heatmap-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.ironlog .heatmap-month-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-muted);
-  height: 12px;
-  white-space: nowrap;
-}
-.ironlog .heatmap-cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  cursor: pointer;
-}
-.ironlog .heatmap-cell.lvl1 { background: rgba(217,165,61,0.45); border-color: rgba(217,165,61,0.45); }
-.ironlog .heatmap-cell.lvl2 { background: var(--accent); border-color: var(--accent); }
-.ironlog .heatmap-cell.future { background: transparent; border-color: transparent; cursor: default; }
-.ironlog .heatmap-cell.selected { outline: 2px solid var(--text); outline-offset: 1px; }
-.ironlog .heatmap-legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 10px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-muted);
-}
-.ironlog .heatmap-legend .heatmap-cell { cursor: default; width: 10px; height: 10px; }
 .ironlog .pr-weight {
   font-family: var(--font-mono);
   font-weight: 600;
@@ -1282,6 +1286,10 @@ const CSS = `
 }
 .ironlog .diet-day-tag.training { color: var(--accent); border-color: var(--accent); }
 .ironlog .row-card.today { border-color: var(--accent); background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), color-mix(in srgb, var(--surface) 92%, black)); }
+.ironlog .row-card.supp-active { border-color: var(--accent); background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), color-mix(in srgb, var(--surface) 92%, black)); }
+.ironlog .supp-legend { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin: 4px 0 12px; }
+.ironlog .supp-legend-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex-shrink: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.ironlog .row-title-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: 7px; flex-shrink: 0; }
 .ironlog .today-tag {
   font-family: var(--font-mono);
   font-size: 9px;
@@ -1697,8 +1705,7 @@ function App() {
     const [importPreview, setImportPreview] = useState(null);
     const [importError, setImportError] = useState(null);
     // ── Statistiche: heatmap, PR, misure corporee ───────────────────
-    const [statsTab, setStatsTab] = useState("heatmap");
-    const [selectedHeatKey, setSelectedHeatKey] = useState(null);
+    const [statsTab, setStatsTab] = useState("pr");
     const [addingMeasurement, setAddingMeasurement] = useState(false);
     const [measureDraft, setMeasureDraft] = useState({ weight: "", chest: "", waist: "", hips: "", arm: "", bf: "" });
     const [confirmDeleteMeasurement, setConfirmDeleteMeasurement] = useState(null);
@@ -2214,63 +2221,6 @@ function App() {
         });
         return series;
     }
-    // ── Statistiche: streak e heatmap ───────────────────────────────
-    function toDayKey(d) {
-        return d.toISOString().slice(0, 10);
-    }
-    function computeStreaks() {
-        const daysSet = new Set(history.map((h) => h.date.slice(0, 10)));
-        let current = 0;
-        let cd = new Date();
-        cd.setHours(0, 0, 0, 0);
-        if (!daysSet.has(toDayKey(cd))) {
-            cd.setDate(cd.getDate() - 1);
-        }
-        while (daysSet.has(toDayKey(cd))) {
-            current++;
-            cd.setDate(cd.getDate() - 1);
-        }
-        const sortedDates = [...daysSet].sort();
-        let longest = 0, run = 0, prevDate = null;
-        sortedDates.forEach((ds) => {
-            const d = new Date(ds + "T00:00:00");
-            if (prevDate) {
-                const diff = Math.round((d - prevDate) / 86400000);
-                run = diff === 1 ? run + 1 : 1;
-            } else {
-                run = 1;
-            }
-            longest = Math.max(longest, run);
-            prevDate = d;
-        });
-        return { current, longest, totalDays: daysSet.size };
-    }
-    function buildHeatmapWeeks(weeksCount) {
-        const counts = {};
-        history.forEach((h) => {
-            const k = h.date.slice(0, 10);
-            counts[k] = (counts[k] || 0) + 1;
-        });
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const dow = (today.getDay() + 6) % 7; // 0 = lunedì
-        const thisMonday = new Date(today);
-        thisMonday.setDate(today.getDate() - dow);
-        const start = new Date(thisMonday);
-        start.setDate(thisMonday.getDate() - 7 * (weeksCount - 1));
-        const weeks = [];
-        for (let w = 0; w < weeksCount; w++) {
-            const week = [];
-            for (let d = 0; d < 7; d++) {
-                const dt = new Date(start);
-                dt.setDate(start.getDate() + w * 7 + d);
-                const key = toDayKey(dt);
-                week.push({ date: dt, key, count: counts[key] || 0, future: dt > today });
-            }
-            weeks.push(week);
-        }
-        return weeks;
-    }
     // ── Statistiche: record personali ───────────────────────────────
     function computeBestMap() {
         const best = {};
@@ -2397,6 +2347,11 @@ function App() {
         const nextDiet = Object.assign(Object.assign({}, diet), { supplements: Object.assign(Object.assign({}, diet.supplements), { [dayKey]: list.filter((s) => s.id !== id) }) });
         persist(Object.assign(Object.assign({}, appState), { diet: nextDiet }));
         setConfirmDeleteSupplement(null);
+    }
+    function toggleSupplementDuringWorkout(dayKey, id) {
+        const list = diet.supplements[dayKey] || [];
+        const nextDiet = Object.assign(Object.assign({}, diet), { supplements: Object.assign(Object.assign({}, diet.supplements), { [dayKey]: list.map((s) => (s.id === id ? Object.assign(Object.assign({}, s), { duringWorkout: !s.duringWorkout }) : s)) }) });
+        persist(Object.assign(Object.assign({}, appState), { diet: nextDiet }));
     }
     function copySupplementsToAllDays(dayKey) {
         const list = diet.supplements[dayKey] || [];
@@ -2857,12 +2812,17 @@ function App() {
                     React.createElement("div", { className: "compare-head" },
                         React.createElement("span", { className: "lbl" }, "Ultima volta")),
                     React.createElement("div", { className: "row-sub" }, "Nessuno storico per questo esercizio ancora."))),
-                progressSeries.some((s) => s && s.length >= 2) && (React.createElement("button", { className: "btn ghost full", onClick: () => {
+                progressSeries.some((s) => s && s.length >= 2) && (React.createElement("button", { className: "progress-link-card", onClick: () => {
                         setScreen("exerciseProgress");
                         persistNav({ screen: "exerciseProgress", tab, dayId, exerciseId: currentExercise.id });
                     } },
-                    React.createElement(IcoCalendar, { size: 15 }),
-                    " Progressioni nel tempo")),
+                    React.createElement("span", { className: "progress-link-icon" },
+                        React.createElement(IcoCalendar, { s: 19 })),
+                    React.createElement("span", { className: "progress-link-text" },
+                        React.createElement("span", { className: "progress-link-title" }, "Progressioni nel tempo"),
+                        React.createElement("span", { className: "progress-link-sub" }, "Grafico per ogni serie allenante")),
+                    React.createElement("span", { className: "progress-link-chevron" },
+                        React.createElement(IcoRight, { s: 20 })))),
                 editingTargetExId === currentExercise.id ? (React.createElement("div", { className: "add-form" },
                     React.createElement("div", { className: "add-form-head" },
                         React.createElement("span", { className: "eyebrow", style: { flexShrink: 0 } }, "Schema"),
@@ -3125,53 +3085,6 @@ function App() {
                 React.createElement("div", { className: "section-label" }, "Note personali"),
                 ex.note ? React.createElement("div", { className: "note-readout" }, ex.note) : React.createElement("div", { className: "note-readout muted" }, "Nessuna nota per questo esercizio."))));
     }
-    function renderStatsHeatmap() {
-        const streaks = computeStreaks();
-        const weeks = buildHeatmapWeeks(24);
-        const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-        let lastMonth = null;
-        const monthLabels = weeks.map((week) => {
-            const m = week[0].date.getMonth();
-            const label = m !== lastMonth ? monthNames[m] : "";
-            lastMonth = m;
-            return label;
-        });
-        const selected = selectedHeatKey ? weeks.flat().find((c) => c.key === selectedHeatKey) : null;
-        return (React.createElement(React.Fragment, null,
-            React.createElement("div", { className: "stat-cards" },
-                React.createElement("div", { className: "stat-card" },
-                    React.createElement(IcoFlame, { size: 18 }),
-                    React.createElement("div", { className: "stat-card-value" }, streaks.current),
-                    React.createElement("div", { className: "stat-card-label" }, "Streak attuale")),
-                React.createElement("div", { className: "stat-card" },
-                    React.createElement(IcoTrophy, { size: 18 }),
-                    React.createElement("div", { className: "stat-card-value" }, streaks.longest),
-                    React.createElement("div", { className: "stat-card-label" }, "Streak record")),
-                React.createElement("div", { className: "stat-card" },
-                    React.createElement(IcoCalendar, { size: 18 }),
-                    React.createElement("div", { className: "stat-card-value" }, streaks.totalDays),
-                    React.createElement("div", { className: "stat-card-label" }, "Giorni allenati")),
-            ),
-            React.createElement("div", { className: "section-label", style: { marginTop: 18 } }, "Ultimi 6 mesi"),
-            React.createElement("div", { className: "heatmap-scroll" },
-                React.createElement("div", { className: "heatmap-grid" },
-                    weeks.map((week, wi) => (React.createElement("div", { className: "heatmap-col", key: wi },
-                        React.createElement("div", { className: "heatmap-month-label" }, monthLabels[wi]),
-                        week.map((cell) => (React.createElement("div", {
-                            key: cell.key,
-                            className: "heatmap-cell" + (cell.future ? " future" : cell.count > 1 ? " lvl2" : cell.count === 1 ? " lvl1" : "") + (selectedHeatKey === cell.key ? " selected" : ""),
-                            onClick: () => !cell.future && setSelectedHeatKey(cell.key === selectedHeatKey ? null : cell.key),
-                        })))))))),
-            React.createElement("div", { className: "heatmap-legend" },
-                React.createElement("span", null, "Meno"),
-                React.createElement("span", { className: "heatmap-cell" }),
-                React.createElement("span", { className: "heatmap-cell lvl1" }),
-                React.createElement("span", { className: "heatmap-cell lvl2" }),
-                React.createElement("span", null, "Più")),
-            selected && (React.createElement("div", { className: "note-card ex-desc", style: { marginTop: 14 } },
-                React.createElement("div", { className: "note-card-label" }, selected.date.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long" })),
-                selected.count > 0 ? `${selected.count} allenamento/i registrato/i` : "Nessun allenamento registrato"))));
-    }
     function renderStatsPR() {
         const bestMap = computeBestMap();
         const list = Object.values(bestMap).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -3346,6 +3259,9 @@ function App() {
             React.createElement("div", { className: "content" },
                 React.createElement("div", { className: "weekday-row" }, WEEKDAYS.map((w) => (React.createElement("button", { key: w.key, className: "weekday-chip" + (dayKey === w.key ? " active" : ""), onClick: () => { setSupplementsDayKey(w.key); setAddingSupplement(false); setEditingSupplementId(null); setConfirmDeleteSupplement(null); } }, w.short[0])))),
                 React.createElement("div", { className: "section-label", style: { marginTop: 18 } }, `Integratori \u2013 ${weekdayShortLabel(dayKey) ? WEEKDAYS.find((w) => w.key === dayKey).label : ""}`),
+                React.createElement("div", { className: "supp-legend" },
+                    React.createElement("span", { className: "supp-legend-dot" }),
+                    "Durante allenamento"),
                 list.length === 0 && !addingSupplement && (React.createElement("div", { className: "empty-state" },
                     "Nessun integratore per questo giorno.",
                     React.createElement("br", null),
@@ -3362,11 +3278,15 @@ function App() {
                             React.createElement("button", { className: "icon-btn", onClick: () => setConfirmDeleteSupplement(null) },
                                 React.createElement(IcoX, { size: 16 })),
                             React.createElement("button", { className: "icon-btn danger", onClick: () => removeSupplement(dayKey, s.id) },
-                                React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "row-card" },
+                                React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "row-card" + (s.duringWorkout ? " supp-active" : "") },
                     React.createElement(IcoApple, { size: 16 }),
                     React.createElement("div", { className: "row-main" },
-                        React.createElement("div", { className: "row-title" }, s.name)),
+                        React.createElement("div", { className: "row-title" },
+                            s.duringWorkout && React.createElement("span", { className: "row-title-dot" }),
+                            s.name)),
                     React.createElement("div", { className: "row-actions" },
+                        React.createElement("button", { className: "icon-btn" + (s.duringWorkout ? " active" : ""), title: "Durante allenamento", onClick: () => toggleSupplementDuringWorkout(dayKey, s.id) },
+                            React.createElement(IcoFlame, { s: 15 })),
                         React.createElement("button", { className: "icon-btn", onClick: () => { setEditingSupplementId(s.id); setEditingSupplementName(s.name); } },
                             React.createElement(IcoPencil, { size: 15 })),
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSupplement(s.id) },
@@ -3409,11 +3329,10 @@ function App() {
             React.createElement(Header, { title: "Statistiche", onBack: () => goHome(tab) }),
             React.createElement("div", { className: "content" },
                 React.createElement("div", { className: "tab-row" },
-                    React.createElement("button", { className: "tab-btn" + (statsTab === "heatmap" ? " active" : ""), onClick: () => setStatsTab("heatmap") }, "Heatmap"),
                     React.createElement("button", { className: "tab-btn" + (statsTab === "pr" ? " active" : ""), onClick: () => setStatsTab("pr") }, "Record"),
                     React.createElement("button", { className: "tab-btn" + (statsTab === "measure" ? " active" : ""), onClick: () => setStatsTab("measure") }, "Misure")),
                 React.createElement("div", { style: { marginTop: 16 } },
-                    statsTab === "heatmap" ? renderStatsHeatmap() : statsTab === "pr" ? renderStatsPR() : renderStatsMeasure()))));
+                    statsTab === "pr" ? renderStatsPR() : renderStatsMeasure()))));
     }
     let body;
     if (screen === "home")
