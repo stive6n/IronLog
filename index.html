@@ -2195,19 +2195,24 @@ function App() {
         }
         return null;
     }
-    function getProgressData(dId, exId) {
+    function getProgressDataBySet(dId, exId) {
         const entries = history.filter((h) => h.dayId === dId).sort((a, b) => new Date(a.date) - new Date(b.date));
-        const data = [];
+        const series = [];
         entries.forEach((h) => {
             const ex = h.exercises.find((e) => e.id === exId);
             if (!ex)
                 return;
-            const top = sessionTopWeight(ex.sets);
-            if (top === null)
-                return;
-            data.push({ label: formatShortDate(h.date), weight: top });
+            const workingSets = ex.sets.filter((s) => !s.warmup);
+            workingSets.forEach((s, i) => {
+                const w = parseFloat(String(s.weight).replace(",", "."));
+                if (isNaN(w))
+                    return;
+                if (!series[i])
+                    series[i] = [];
+                series[i].push({ label: formatShortDate(h.date), weight: w });
+            });
         });
-        return data;
+        return series;
     }
     // ── Statistiche: streak e heatmap ───────────────────────────────
     function toDayKey(d) {
@@ -2827,7 +2832,7 @@ function App() {
             return null;
         const idx = currentDay.exercises.findIndex((e) => e.id === currentExercise.id) + 1;
         const prev = getLatestHistoryFor(currentDay.id, currentExercise.id);
-        const progressData = getProgressData(currentDay.id, currentExercise.id);
+        const progressSeries = getProgressDataBySet(currentDay.id, currentExercise.id);
         const warmupSets = currentExercise.sets.filter((s) => s.warmup);
         const workingSets = currentExercise.sets.filter((s) => !s.warmup);
         return (React.createElement(React.Fragment, null,
@@ -2852,14 +2857,12 @@ function App() {
                     React.createElement("div", { className: "compare-head" },
                         React.createElement("span", { className: "lbl" }, "Ultima volta")),
                     React.createElement("div", { className: "row-sub" }, "Nessuno storico per questo esercizio ancora."))),
-                progressData.length >= 2 && (React.createElement("div", { className: "compare-card" },
-                    React.createElement("div", { className: "compare-head" },
-                        React.createElement("span", { className: "lbl" }, "Progresso peso"),
-                        React.createElement("span", { className: "date" },
-                            progressData.length,
-                            " sessioni")),
-                    React.createElement("div", { style: { width: "100%", height: 160 } },
-                        React.createElement(SvgLineChart, { data: progressData })))),
+                progressSeries.some((s) => s && s.length >= 2) && (React.createElement("button", { className: "btn ghost full", onClick: () => {
+                        setScreen("exerciseProgress");
+                        persistNav({ screen: "exerciseProgress", tab, dayId, exerciseId: currentExercise.id });
+                    } },
+                    React.createElement(IcoCalendar, { size: 15 }),
+                    " Progressioni nel tempo")),
                 editingTargetExId === currentExercise.id ? (React.createElement("div", { className: "add-form" },
                     React.createElement("div", { className: "add-form-head" },
                         React.createElement("span", { className: "eyebrow", style: { flexShrink: 0 } }, "Schema"),
@@ -2940,6 +2943,28 @@ function App() {
                     " Aggiungi serie")) : (React.createElement("div", { className: "limit-note" }, "Hai raggiunto il massimo di 5 serie.")),
                 React.createElement("div", { className: "section-label" }, "Note esercizio"),
                 React.createElement("textarea", { className: "input-text", style: { minHeight: 80, resize: "vertical" }, placeholder: "Tecnica, accorgimenti, note permanenti sull'esercizio\u2026", value: currentExercise.description || "", onChange: (e) => updateExerciseDescription(currentDay.id, currentExercise.id, e.target.value) }))));
+    }
+    function renderExerciseProgress() {
+        if (!currentDay || !currentExercise)
+            return null;
+        const progressSeries = getProgressDataBySet(currentDay.id, currentExercise.id);
+        const validSeries = progressSeries
+            .map((s, i) => ({ s, i }))
+            .filter(({ s }) => s && s.length >= 2);
+        const body = validSeries.length === 0
+            ? React.createElement("div", { className: "empty-state" }, "Non ci sono ancora abbastanza sessioni per mostrare un grafico.")
+            : validSeries.map(({ s, i }) => React.createElement("div", { className: "compare-card", key: i },
+                React.createElement("div", { className: "compare-head" },
+                    React.createElement("span", { className: "lbl" }, `Serie ${i + 1}`),
+                    React.createElement("span", { className: "date" }, `${s.length} sessioni`)),
+                React.createElement("div", { style: { width: "100%", height: 160 } },
+                    React.createElement(SvgLineChart, { data: s }))));
+        return React.createElement(React.Fragment, null,
+            React.createElement(Header, { title: "Progressioni nel tempo", eyebrow: currentExercise.name.toUpperCase(), onBack: () => {
+                    setScreen("exercise");
+                    persistNav({ screen: "exercise", tab, dayId, exerciseId: currentExercise.id });
+                } }),
+            React.createElement("div", { className: "content" }, body));
     }
     function renderSession() {
         if (!currentDay)
@@ -3397,6 +3422,8 @@ function App() {
         body = renderDay();
     else if (screen === "exercise")
         body = renderExercise();
+    else if (screen === "exerciseProgress")
+        body = renderExerciseProgress();
     else if (screen === "session")
         body = renderSession();
     else if (screen === "pastSession")
