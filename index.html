@@ -53,6 +53,8 @@
 (function(){
 'use strict';
 
+window.__ironlogBootStart = Date.now();
+
 // Registra un service worker minimale: serve solo a soddisfare i criteri di
 // installabilità dei browser (Chrome/Android). Nessuna cache, solo pass-through.
 if ('serviceWorker' in navigator) {
@@ -193,6 +195,12 @@ const COLORS = {
 };
 function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function hapticLight() {
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { }
+}
+function hapticSuccess() {
+    try { if (navigator.vibrate) navigator.vibrate([15, 40, 20]); } catch (e) { }
 }
 function isIOSDevice() {
     return /iP(hone|od|ad)/.test(navigator.userAgent) && !window.MSStream;
@@ -479,6 +487,7 @@ const CSS = `
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0) 0 0/18px 18px,
     radial-gradient(ellipse 100% 260px at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent),
@@ -537,6 +546,20 @@ const CSS = `
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
+@keyframes skeletonShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.ironlog .skeleton {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 37%, var(--surface) 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+  border-radius: 12px;
+}
+.ironlog .skeleton-screen { padding: 24px 20px; display: flex; flex-direction: column; gap: 14px; }
+.ironlog .skeleton-topbar { height: 26px; width: 150px; border-radius: 6px; margin-bottom: 8px; }
+.ironlog .skeleton-card { height: 78px; border-radius: 14px; }
+.ironlog .skeleton-line { height: 13px; border-radius: 6px; }
 .ironlog .topbar {
   display: flex;
   align-items: center;
@@ -1095,7 +1118,26 @@ const CSS = `
   font-size: 16px;
   color: var(--text-muted);
 }
-.ironlog .timer-combo-rest { display: flex; align-items: center; gap: 10px; }
+.ironlog .timer-combo-rest {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.ironlog .timer-rest-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: color-mix(in srgb, var(--accent) 30%, var(--surface-2));
+  transition: width 1s linear;
+  z-index: 0;
+  pointer-events: none;
+}
+.ironlog .timer-rest-left, .ironlog .timer-combo-rest .timer-rest-btns { position: relative; z-index: 1; }
 .ironlog .info-toggle {
   display: flex;
   align-items: center;
@@ -1165,17 +1207,22 @@ const CSS = `
 }
 
 /* ── Transizioni schermata & micro-animazioni ─────────────────────── */
-@keyframes screenIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes screenInFwd {
+  from { opacity: 0; transform: translateX(26px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes screenInBack {
+  from { opacity: 0; transform: translateX(-26px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 .ironlog .screen-anim {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  animation: screenIn 0.28s cubic-bezier(0.16,1,0.3,1);
+  animation: screenInFwd 0.3s cubic-bezier(0.16,1,0.3,1);
 }
+.ironlog .screen-anim.back { animation-name: screenInBack; }
 @keyframes setPulse {
   0% { transform: scale(1); }
   45% { transform: scale(1.3); }
@@ -1196,6 +1243,27 @@ const CSS = `
   display: flex; align-items: center; justify-content: center;
   color: var(--accent);
   animation: prPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.ironlog .confetti-burst {
+  position: fixed;
+  top: 90px;
+  left: 0;
+  right: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 500;
+}
+.ironlog .confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 11px;
+  border-radius: 2px;
+  animation: confettiFall 0.9s ease-out forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(140px) rotate(340deg); opacity: 0; }
 }
 
 /* ── Masthead con pulsante statistiche ────────────────────────────── */
@@ -1743,6 +1811,8 @@ function App() {
     const [restElapsed, setRestElapsed] = useState(0);
     const [sessionChecked, setSessionChecked] = useState({});
     const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
+    const [navDir, setNavDir] = useState("fwd");
+    const [confetti, setConfetti] = useState(null);
     const globalTimerRef = useRef(null);
     const restTimerRef = useRef(null);
     useEffect(() => {
@@ -1834,6 +1904,11 @@ function App() {
             window.removeEventListener("appinstalled", onInstalled);
         };
     }, []);
+    // Direzione transizione schermata: torna a "avanti" dopo ogni cambio schermo
+    useEffect(() => {
+        const t = setTimeout(() => setNavDir("fwd"), 320);
+        return () => clearTimeout(t);
+    }, [screen]);
     // Rest timer
     useEffect(() => {
         function tick() {
@@ -1853,7 +1928,13 @@ function App() {
         return (React.createElement("div", { className: "ironlog" },
             React.createElement("style", null, CSS),
             React.createElement("div", { className: "shell" },
-                React.createElement("div", { className: "empty-state" }, "Caricamento allenamenti\u2026"))));
+                React.createElement("div", { className: "skeleton-screen" },
+                    React.createElement("div", { className: "skeleton skeleton-topbar" }),
+                    React.createElement("div", { className: "skeleton skeleton-card" }),
+                    React.createElement("div", { className: "skeleton skeleton-card" }),
+                    React.createElement("div", { className: "skeleton skeleton-line", style: { width: "55%" } }),
+                    React.createElement("div", { className: "skeleton skeleton-card" }),
+                    React.createElement("div", { className: "skeleton skeleton-card" })))));
     }
     const days = appState.days;
     const history = appState.history;
@@ -2379,6 +2460,18 @@ function App() {
         setConfirmApplySplit(false);
         goHome("todo");
     }
+    function triggerConfetti() {
+        const colors = ["#D9A53D", "#F2C94C", "#F4E285", "#C99700", "#FFF3D0"];
+        const pieces = Array.from({ length: 16 }, (_, i) => ({
+            id: i,
+            left: Math.random() * 220 - 110,
+            delay: Math.random() * 0.15,
+            rot: Math.floor(Math.random() * 360),
+            color: colors[i % colors.length],
+        }));
+        setConfetti(pieces);
+        setTimeout(() => setConfetti(null), 900);
+    }
     function completeSession() {
         if (!currentDay)
             return;
@@ -2397,6 +2490,7 @@ function App() {
             })),
         };
         persist(Object.assign(Object.assign({}, appState), { history: [entry, ...history] }));
+        hapticSuccess();
         setSessionNotes({});
         setSessionChecked({});
         setSessionIdx(0);
@@ -2425,7 +2519,7 @@ function App() {
     }
     function Header({ title, eyebrow, onBack }) {
         return (React.createElement("div", { className: "topbar" },
-            onBack && (React.createElement("button", { className: "icon-btn", onClick: onBack, "aria-label": "Torna indietro" },
+            onBack && (React.createElement("button", { className: "icon-btn", onClick: () => { setNavDir("back"); onBack(); }, "aria-label": "Torna indietro" },
                 React.createElement(IcoLeft, { size: 20 }))),
             React.createElement("div", { className: "topbar-text" },
                 eyebrow && React.createElement("div", { className: "eyebrow" }, eyebrow),
@@ -2940,6 +3034,8 @@ function App() {
         const orderedSets = [...ex.sets.filter((s) => s.warmup), ...ex.sets.filter((s) => !s.warmup)];
         let wCounter = 0, oCounter = 0;
         const setLabels = orderedSets.map((s) => (s.warmup ? `A${++wCounter}` : `${++oCounter}`));
+        const REST_CYCLE_SECS = 180;
+        const restFillPct = ((restElapsed % REST_CYCLE_SECS) / REST_CYCLE_SECS) * 100;
         return (React.createElement(React.Fragment, null,
             React.createElement(Header, { title: currentDay.name, eyebrow: `ESERCIZIO ${sessionIdx + 1} DI ${exercises.length}`, onBack: () => {
                     setScreen("day");
@@ -2951,6 +3047,7 @@ function App() {
                         React.createElement("div", { className: "timer-combo-elapsed-label" }, "Allenamento"),
                         React.createElement("div", { className: "timer-combo-elapsed-value" }, fmtTime(sessionElapsed))),
                     React.createElement("div", { className: "timer-combo-rest" },
+                        React.createElement("div", { className: "timer-rest-fill", style: { width: `${restFillPct}%` } }),
                         React.createElement("div", { className: "timer-rest-left" },
                             React.createElement("div", { className: "timer-rest-label" }, "Recupero"),
                             React.createElement("div", { className: "timer-rest-value" }, fmtTime(restElapsed))),
@@ -3017,8 +3114,18 @@ function App() {
                             React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
                             React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
                             React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => {
-                                    const next = Object.assign(Object.assign({}, c), { [s.id]: !c[s.id] });
+                                    const willBeDone = !c[s.id];
+                                    const next = Object.assign(Object.assign({}, c), { [s.id]: willBeDone });
                                     persistNav({ sessionChecked: next });
+                                    if (willBeDone) {
+                                        if (isPR) {
+                                            hapticSuccess();
+                                            triggerConfetti();
+                                        }
+                                        else {
+                                            hapticLight();
+                                        }
+                                    }
                                     return next;
                                 }) }, done && React.createElement(IcoCheck, { size: 13 })),
                             isPR ? React.createElement("span", { className: "pr-badge", title: `Nuovo record! Precedente: ${exBest.weight}kg` }, React.createElement(IcoTrophy, { size: 15 })) : s.warmup ? React.createElement("span", { className: "warmup-tag" }, "Risc.") : React.createElement("span", null)));
@@ -3368,7 +3475,12 @@ function App() {
     return (React.createElement("div", { className: "ironlog", "data-theme": theme, style: themeVars() },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" },
-            React.createElement("div", { className: "screen-anim", key: animKey }, body),
+            React.createElement("div", { className: "screen-anim" + (navDir === "back" ? " back" : ""), key: animKey }, body),
+            confetti && (React.createElement("div", { className: "confetti-burst" }, confetti.map((p) => (React.createElement("span", {
+                key: p.id,
+                className: "confetti-piece",
+                style: { left: `calc(50% + ${p.left}px)`, background: p.color, animationDelay: `${p.delay}s`, transform: `rotate(${p.rot}deg)` },
+            }))))),
             undoState && (React.createElement("div", { className: "undo-snackbar" },
                 React.createElement("span", null, undoState.label),
                 React.createElement("button", { className: "btn primary", onClick: performUndo }, "Annulla"))))));
@@ -3378,7 +3490,12 @@ try{
   const container=document.getElementById('root');
   const root=ReactDOM.createRoot(container);
   root.render(React.createElement(App));
-  document.getElementById('loading').style.display='none';
+  var __elapsed = Date.now() - (window.__ironlogBootStart || Date.now());
+  var __remaining = Math.max(0, 1000 - __elapsed);
+  setTimeout(function(){
+    var __loadingEl = document.getElementById('loading');
+    if (__loadingEl) __loadingEl.style.display = 'none';
+  }, __remaining);
 }catch(err){
   showError('Errore avvio: '+err.message);
   console.error(err);
