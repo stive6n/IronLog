@@ -217,10 +217,10 @@ function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 function hapticLight() {
-    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) { }
+    try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) { }
 }
 function hapticSuccess() {
-    try { if (navigator.vibrate) navigator.vibrate([15, 40, 20]); } catch (e) { }
+    try { if (navigator.vibrate) navigator.vibrate([30, 50, 30]); } catch (e) { }
 }
 function getWelcomePhrase(name, customList) {
     if (customList && customList.length) {
@@ -565,7 +565,7 @@ const CSS = `
   align-items: center;
   justify-content: center;
   padding: 24px;
-  pointer-events: none;
+  cursor: pointer;
 }
 .ironlog .welcome-text {
   font-family: var(--font-display);
@@ -2044,6 +2044,7 @@ function App() {
     const [sessionSummary, setSessionSummary] = useState(null);
     const [welcomePhase, setWelcomePhase] = useState("hidden");
     const [welcomeText, setWelcomeText] = useState("");
+    const welcomeTimersRef = useRef([]);
     const [splashGone, setSplashGone] = useState(!!window.__ironlogSplashHidden);
     const globalTimerRef = useRef(null);
     const restTimerRef = useRef(null);
@@ -2163,9 +2164,16 @@ function App() {
         setWelcomePhase("shown");
         const t1 = setTimeout(() => setWelcomePhase("fading"), 1700);
         const t2 = setTimeout(() => setWelcomePhase("hidden"), 2400);
+        welcomeTimersRef.current = [t1, t2];
         return () => { clearTimeout(t1); clearTimeout(t2); };
         // eslint-disable-next-line
     }, [loaded, splashGone]);
+    function dismissWelcome() {
+        welcomeTimersRef.current.forEach(clearTimeout);
+        setWelcomePhase("fading");
+        const t3 = setTimeout(() => setWelcomePhase("hidden"), 400);
+        welcomeTimersRef.current = [t3];
+    }
     // Azzera lo scroll PRIMA che il browser disegni il nuovo schermo, per evitare
     // il piccolo "salto" quando si torna a una pagina più corta di quella lasciata
     useLayoutEffect(() => {
@@ -4029,7 +4037,7 @@ function App() {
             undoState && (React.createElement("div", { className: "undo-snackbar" },
                 React.createElement("span", null, undoState.label),
                 React.createElement("button", { className: "btn primary", onClick: performUndo }, "Annulla")))),
-        welcomePhase !== "hidden" && (React.createElement("div", { className: "welcome-overlay" + (welcomePhase === "fading" ? " fading" : "") },
+        welcomePhase !== "hidden" && (React.createElement("div", { className: "welcome-overlay" + (welcomePhase === "fading" ? " fading" : ""), onClick: dismissWelcome },
             React.createElement("div", { className: "welcome-text" }, welcomeText)))));
 }
 
