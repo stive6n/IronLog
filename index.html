@@ -1987,6 +1987,7 @@ function App() {
     const [editingExName, setEditingExName] = useState("");
     const [confirmDeleteEx, setConfirmDeleteEx] = useState(null);
     const [mgmtAddingExerciseDay, setMgmtAddingExerciseDay] = useState(null);
+    const [reorderExId, setReorderExId] = useState(null);
     const [editingTargetExId, setEditingTargetExId] = useState(null);
     const [targetDraftSets, setTargetDraftSets] = useState("");
     const [targetDraftReps, setTargetDraftReps] = useState("");
@@ -2517,6 +2518,20 @@ function App() {
         setAddingExercise(false);
         setMgmtAddingExerciseDay(null);
         setExDraftName("");
+    }
+    function moveExerciseToPosition(dId, exId, pos) {
+        const day = days.find((d) => d.id === dId);
+        if (!day)
+            return;
+        const idx = day.exercises.findIndex((e) => e.id === exId);
+        const target = Math.max(0, Math.min(pos - 1, day.exercises.length - 1));
+        setReorderExId(null);
+        if (idx === -1 || idx === target)
+            return;
+        const nextExercises = [...day.exercises];
+        const [moved] = nextExercises.splice(idx, 1);
+        nextExercises.splice(target, 0, moved);
+        persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => (d.id === dId ? Object.assign(Object.assign({}, d), { exercises: nextExercises }) : d)) }));
     }
     function updateExerciseDescription(dId, exId, description) {
         persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => d.id !== dId ? d : Object.assign(Object.assign({}, d), { exercises: d.exercises.map((e) => e.id !== exId ? e : Object.assign(Object.assign({}, e), { description })) })) }));
@@ -3137,10 +3152,15 @@ function App() {
                                 " serie",
                                 (ex.targetSets || ex.targetReps) ? ` · Obiettivo ${ex.targetSets || "–"} × ${ex.targetReps || "–"}` : "")),
                         React.createElement("div", { className: "row-actions" },
+                            React.createElement("button", { className: "icon-btn" + (reorderExId === ex.id ? " active" : ""), onClick: (e) => { e.stopPropagation(); setReorderExId(reorderExId === ex.id ? null : ex.id); } },
+                                React.createElement(IcoMove, { size: 14 })),
                             React.createElement("button", { className: "icon-btn", onClick: (e) => { e.stopPropagation(); setEditingExId(ex.id); setEditingExName(ex.name); } },
                                 React.createElement(IcoPencil, { size: 14 })),
                             React.createElement("button", { className: "icon-btn danger", onClick: (e) => { e.stopPropagation(); setConfirmDeleteEx(ex.id); } },
-                                React.createElement(IcoTrash, { size: 14 })))))))),
+                                React.createElement(IcoTrash, { size: 14 })))),
+                    reorderExId === ex.id && (React.createElement("div", { className: "reorder-picker" },
+                        React.createElement("span", { className: "reorder-picker-label" }, "Sposta in posizione:"),
+                        React.createElement("div", { className: "reorder-picker-chips" }, d.exercises.map((_, pos) => (React.createElement("button", { key: pos, className: "reorder-chip" + (pos === j ? " current" : ""), onClick: (e) => { e.stopPropagation(); moveExerciseToPosition(d.id, ex.id, pos + 1); } }, pos + 1)))))))))),
                     d.exercises.length < MAX_EXERCISES ? (mgmtAddingExerciseDay === d.id ? (React.createElement("div", { className: "add-form" },
                         React.createElement("div", { className: "add-form-head" },
                             React.createElement("div", { className: "plate-badge sm" }, d.exercises.length + 1),
@@ -3280,10 +3300,14 @@ function App() {
                             " serie",
                             (ex.targetSets || ex.targetReps) ? ` · Obiettivo ${ex.targetSets || "–"} × ${ex.targetReps || "–"}` : "")),
                     React.createElement("div", { className: "row-actions" },
+                        React.createElement("button", { className: "icon-btn" + (reorderExId === ex.id ? " active" : ""), onClick: (e) => { e.stopPropagation(); setReorderExId(reorderExId === ex.id ? null : ex.id); } },
+                            React.createElement(IcoMove, { size: 15 })),
                         React.createElement("button", { className: "icon-btn", onClick: (e) => { e.stopPropagation(); setEditingExId(ex.id); setEditingExName(ex.name); } },
                             React.createElement(IcoPencil, { size: 15 })),
                         React.createElement("button", { className: "icon-btn danger", onClick: (e) => { e.stopPropagation(); setConfirmDeleteEx(ex.id); } },
-                            React.createElement(IcoTrash, { size: 15 }))))))))),
+                            React.createElement(IcoTrash, { size: 15 }))))), reorderExId === ex.id && (React.createElement("div", { className: "reorder-picker" },
+                    React.createElement("span", { className: "reorder-picker-label" }, "Sposta in posizione:"),
+                    React.createElement("div", { className: "reorder-picker-chips" }, currentDay.exercises.map((_, pos) => (React.createElement("button", { key: pos, className: "reorder-chip" + (pos === i ? " current" : ""), onClick: (e) => { e.stopPropagation(); moveExerciseToPosition(currentDay.id, ex.id, pos + 1); } }, pos + 1)))))))))),
                 currentDay.exercises.length < MAX_EXERCISES ? (addingExercise ? (React.createElement("div", { className: "add-form" },
                     React.createElement("div", { className: "add-form-head" },
                         React.createElement("div", { className: "plate-badge sm" }, currentDay.exercises.length + 1),
