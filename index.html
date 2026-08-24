@@ -1213,6 +1213,14 @@ const CSS = `
 }
 .ironlog .timer-btn.active { background: var(--accent); color: var(--bg); }
 .ironlog .timer-btn.reset { border-color: var(--border); color: var(--text-muted); }
+.ironlog .session-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 55;
+  background: var(--bg);
+  padding-bottom: 12px;
+}
+.ironlog .session-sticky-bar .timer-combo { margin: 0 16px; }
 .ironlog .timer-combo {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1222,6 +1230,7 @@ const CSS = `
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  box-shadow: var(--shadow-2);
 }
 .ironlog .timer-combo-elapsed { display: flex; align-items: center; gap: 8px; }
 .ironlog .timer-combo-elapsed-label {
@@ -3517,11 +3526,11 @@ function App() {
         const SESSION_RING_CIRC = 2 * Math.PI * SESSION_RING_R;
         const sessionRingPct = (sessionElapsed % SESSION_RING_CYCLE_SECS) / SESSION_RING_CYCLE_SECS;
         return (React.createElement(React.Fragment, null,
-            React.createElement(Header, { title: currentDay.name, eyebrow: `ESERCIZIO ${sessionIdx + 1} DI ${exercises.length}`, onBack: () => {
-                    setScreen("day");
-                    persistNav({ screen: "day", tab, dayId });
-                } }),
-            React.createElement("div", { className: "content session-screen" },
+            React.createElement("div", { className: "session-sticky-bar" },
+                React.createElement(Header, { title: currentDay.name, eyebrow: `ESERCIZIO ${sessionIdx + 1} DI ${exercises.length}`, onBack: () => {
+                        setScreen("day");
+                        persistNav({ screen: "day", tab, dayId });
+                    } }),
                 React.createElement("div", { className: "timer-combo" },
                     React.createElement("div", { className: "timer-combo-elapsed" },
                         React.createElement("div", { className: "timer-ring-wrap" },
@@ -3559,7 +3568,8 @@ function App() {
                                     setRestAccumulated(0);
                                     setRestElapsed(0);
                                     persistNav({ restRunning: false, restStartedAt: null, restAccumulated: 0 });
-                                } }, "Reset")))),
+                                } }, "Reset"))))),
+            React.createElement("div", { className: "content session-screen" },
                 React.createElement("div", { className: "session-ex-name" }, ex.name),
                 (ex.targetSets || ex.targetReps) && (React.createElement("div", { className: "target-pill" },
                     "Obiettivo: ",
