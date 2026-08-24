@@ -1214,11 +1214,16 @@ const CSS = `
 .ironlog .timer-btn.active { background: var(--accent); color: var(--bg); }
 .ironlog .timer-btn.reset { border-color: var(--border); color: var(--text-muted); }
 .ironlog .session-sticky-bar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
   z-index: 55;
   background: var(--bg);
   padding-bottom: 12px;
+  box-shadow: var(--shadow-2);
 }
 .ironlog .session-sticky-bar .timer-combo { margin: 0 16px; }
 .ironlog .timer-combo {
@@ -2045,6 +2050,8 @@ function App() {
     const [restElapsed, setRestElapsed] = useState(0);
     const [sessionChecked, setSessionChecked] = useState({});
     const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
+    const sessionStickyBarRef = useRef(null);
+    const [sessionStickyBarH, setSessionStickyBarH] = useState(0);
     const navDirRef = useRef("fwd");
     const animDirCacheRef = useRef({ key: null, dir: "fwd" });
     const [confetti, setConfetti] = useState(null);
@@ -2189,6 +2196,19 @@ function App() {
     useLayoutEffect(() => {
         window.scrollTo(0, 0);
     }, [screen]);
+    // Misura l'altezza del banner timer fisso in sessione, per lasciare lo spazio giusto sotto
+    useEffect(() => {
+        if (screen !== "session")
+            return;
+        const el = sessionStickyBarRef.current;
+        if (!el)
+            return;
+        const measure = () => setSessionStickyBarH(el.offsetHeight);
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [screen, sessionIdx, restRunning]);
     // Effetto vetro sull'header quando si scorre la pagina
     useEffect(() => {
         function onScroll() { setScrolled(window.scrollY > 8); }
@@ -3526,7 +3546,7 @@ function App() {
         const SESSION_RING_CIRC = 2 * Math.PI * SESSION_RING_R;
         const sessionRingPct = (sessionElapsed % SESSION_RING_CYCLE_SECS) / SESSION_RING_CYCLE_SECS;
         return (React.createElement(React.Fragment, null,
-            React.createElement("div", { className: "session-sticky-bar" },
+            React.createElement("div", { className: "session-sticky-bar", ref: sessionStickyBarRef },
                 React.createElement(Header, { title: currentDay.name, eyebrow: `ESERCIZIO ${sessionIdx + 1} DI ${exercises.length}`, onBack: () => {
                         setScreen("day");
                         persistNav({ screen: "day", tab, dayId });
@@ -3569,7 +3589,7 @@ function App() {
                                     setRestElapsed(0);
                                     persistNav({ restRunning: false, restStartedAt: null, restAccumulated: 0 });
                                 } }, "Reset"))))),
-            React.createElement("div", { className: "content session-screen" },
+            React.createElement("div", { className: "content session-screen", style: { paddingTop: sessionStickyBarH + 20 } },
                 React.createElement("div", { className: "session-ex-name" }, ex.name),
                 (ex.targetSets || ex.targetReps) && (React.createElement("div", { className: "target-pill" },
                     "Obiettivo: ",
