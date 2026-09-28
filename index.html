@@ -2141,6 +2141,42 @@ function App() {
         }
         return () => clearInterval(globalTimerRef.current);
     }, [sessionStartTime]);
+    // Chiusura automatica della sessione dopo 1 ora di inattività
+    const SESSION_IDLE_MS = 60 * 60 * 1000;
+    const lastActivityRef = useRef(null);
+    const lastActivityPersistRef = useRef(0);
+    const autoClosingRef = useRef(false);
+    const autoCloseRef = useRef(null);
+    useEffect(() => {
+        if (!loaded || sessionStartTime === null)
+            return;
+        lastActivityRef.current = Math.max(navRef.current.lastActivityAt || 0, sessionStartTime);
+        const check = () => {
+            const last = lastActivityRef.current || sessionStartTime;
+            if (Date.now() - last > SESSION_IDLE_MS && autoCloseRef.current)
+                autoCloseRef.current(last);
+        };
+        const mark = () => {
+            const now = Date.now();
+            lastActivityRef.current = now;
+            if (now - lastActivityPersistRef.current > 15000) {
+                lastActivityPersistRef.current = now;
+                persistNav({ lastActivityAt: now });
+            }
+        };
+        const onVisible = () => { if (document.visibilityState === "visible")
+            check(); };
+        check();
+        const events = ["pointerdown", "touchstart", "keydown", "input"];
+        events.forEach((ev) => window.addEventListener(ev, mark, true));
+        document.addEventListener("visibilitychange", onVisible);
+        const iv = setInterval(check, 30000);
+        return () => {
+            events.forEach((ev) => window.removeEventListener(ev, mark, true));
+            document.removeEventListener("visibilitychange", onVisible);
+            clearInterval(iv);
+        };
+    }, [loaded, sessionStartTime]);
     // Installazione PWA
     useEffect(() => {
         if (window.__deferredInstallPrompt)
@@ -2407,7 +2443,9 @@ function App() {
         setRestAccumulated(0);
         setRestElapsed(0);
         setScreen("session");
-        persistNav({ screen: "session", tab, dayId, sessionIdx: 0, sessionNotes: {}, sessionStartTime: now, sessionChecked: {}, restRunning: false, restStartedAt: null, restAccumulated: 0 });
+        autoClosingRef.current = false;
+        lastActivityRef.current = now;
+        persistNav({ screen: "session", tab, dayId, sessionDayId: dayId, lastActivityAt: now, sessionIdx: 0, sessionNotes: {}, sessionStartTime: now, sessionChecked: {}, restRunning: false, restStartedAt: null, restAccumulated: 0 });
     }
     function scheduleUndoClear() {
         if (undoTimerRef.current)
@@ -2632,6 +2670,19 @@ function App() {
             const ex = h.exercises.find((e) => e.id === exId);
             if (ex)
                 return { date: h.date, sets: ex.sets.filter((s) => !s.warmup), note: ex.note || "" };
+        }
+        return null;
+    }
+    function getPreviousToLatestHistoryFor(dId, exId) {
+        const entries = history.filter((h) => h.dayId === dId).sort((a, b) => new Date(b.date) - new Date(a.date));
+        let found = 0;
+        for (const h of entries) {
+            const ex = h.exercises.find((e) => e.id === exId);
+            if (ex) {
+                found++;
+                if (found === 2)
+                    return { date: h.date, sets: ex.sets.filter((s) => !s.warmup) };
+            }
         }
         return null;
     }
@@ -2899,6 +2950,44 @@ function App() {
         setScreen("sessionSummary");
         persistNav({ screen: "sessionSummary", tab: "todo", sessionStartTime: null, sessionChecked: {}, sessionNotes: {}, restRunning: false, restStartedAt: null, restAccumulated: 0 });
     }
+    function autoCloseSession(lastActivity) {
+        if (autoClosingRef.current)
+            return;
+        autoClosingRef.current = true;
+        const sDayId = navRef.current.sessionDayId || dayId;
+        const sDay = days.find((d) => d.id === sDayId);
+        const hasProgress = Object.values(sessionChecked).some(Boolean) || Object.values(sessionNotes).some((n) => n && String(n).trim());
+        if (sDay && hasProgress) {
+            const entry = {
+                id: uid(),
+                dayId: sDay.id,
+                dayName: sDay.name,
+                date: new Date(lastActivity).toISOString(),
+                durationSecs: sessionStartTime ? Math.max(0, Math.floor((lastActivity - sessionStartTime) / 1000)) : 0,
+                exercises: sDay.exercises.map((e) => ({
+                    id: e.id,
+                    name: e.name,
+                    sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, warmup: !!s.warmup })),
+                    note: sessionNotes[e.id] || "",
+                })),
+            };
+            persist(Object.assign(Object.assign({}, appState), { history: [entry, ...history] }));
+        }
+        setSessionNotes({});
+        setSessionChecked({});
+        setSessionIdx(0);
+        setSessionStartTime(null);
+        setSessionElapsed(0);
+        setRestRunning(false);
+        setRestStartedAt(null);
+        setRestAccumulated(0);
+        setRestElapsed(0);
+        setDayId(null);
+        setExerciseId(null);
+        setScreen("training");
+        persistNav({ screen: "training", tab, sessionStartTime: null, sessionChecked: {}, sessionNotes: {}, sessionIdx: 0, sessionDayId: null, lastActivityAt: null, restRunning: false, restStartedAt: null, restAccumulated: 0 });
+    }
+    autoCloseRef.current = autoCloseSession;
     function removeHistoryEntry(hId) {
         persist(Object.assign(Object.assign({}, appState), { history: history.filter((h) => h.id !== hId) }));
         setConfirmDeleteHistory(null);
@@ -3533,6 +3622,7 @@ function App() {
             return null;
         const isLast = sessionIdx === exercises.length - 1;
         const prev = getLatestHistoryFor(currentDay.id, ex.id);
+        const prev2 = getPreviousToLatestHistoryFor(currentDay.id, ex.id);
         const bestMap = computeBestMap();
         const exBest = bestMap[ex.id] || null;
         const orderedSets = [...ex.sets.filter((s) => s.warmup), ...ex.sets.filter((s) => !s.warmup)];
@@ -3628,14 +3718,29 @@ function App() {
                         const prevSet = (!s.warmup && prev && workingIdx > -1) ? prev.sets[workingIdx] : null;
                         const prevW = prevSet ? parseFloat(String(prevSet.weight).replace(",", ".")) : NaN;
                         const prevReps = prevSet ? parseFloat(String(prevSet.reps).replace(",", ".")) : NaN;
+                        // Trend rispetto alla sessione ancora precedente: verde = aumentato, rosso = diminuito (solo se il valore è quello dell'ultima volta)
+                        const prev2Set = (!s.warmup && prev2 && workingIdx > -1) ? prev2.sets[workingIdx] : null;
+                        const prev2W = prev2Set ? parseFloat(String(prev2Set.weight).replace(",", ".")) : NaN;
+                        const prev2Reps = prev2Set ? parseFloat(String(prev2Set.reps).replace(",", ".")) : NaN;
+                        const trendColor = (cur, last, before) => {
+                            if (isNaN(cur) || isNaN(last) || isNaN(before) || cur !== last)
+                                return undefined;
+                            if (last > before)
+                                return "var(--success, #5CB85C)";
+                            if (last < before)
+                                return "var(--danger, #E74C3C)";
+                            return undefined;
+                        };
+                        const weightTrendColor = trendColor(curW, prevW, prev2W);
+                        const repsTrendColor = trendColor(curReps, prevReps, prev2Reps);
                         const isWeightPR = !s.warmup && exBest && !isNaN(curW) && curW > exBest.weight;
                         const isRepPR = !s.warmup && !isWeightPR && prevSet && !isNaN(curW) && !isNaN(prevW) && curW === prevW && !isNaN(curReps) && !isNaN(prevReps) && curReps > prevReps;
                         const isPR = isWeightPR || isRepPR;
                         const prTitle = isWeightPR ? `Nuovo record! Precedente: ${exBest.weight}kg` : isRepPR ? `Nuovo record! Stesso peso, più ripetizioni (prima: ${prevReps})` : "";
                         return (React.createElement("div", { className: "set-row" + (done ? " done" : "") + (s.warmup ? " warmup-row" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
                             React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, setLabels[i]),
-                            React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
-                            React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
+                            React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", style: weightTrendColor ? { color: weightTrendColor, fontWeight: 700 } : undefined, value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
+                            React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", style: repsTrendColor ? { color: repsTrendColor, fontWeight: 700 } : undefined, value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
                             React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => {
                                     const willBeDone = !c[s.id];
                                     const next = Object.assign(Object.assign({}, c), { [s.id]: willBeDone });
