@@ -1226,6 +1226,12 @@ const CSS = `
   box-shadow: var(--shadow-2);
 }
 .ironlog .session-sticky-bar .timer-combo { margin: 0 16px; }
+/* iPhone (app installata): lascia spazio sotto l'ora / status bar */
+@supports (-webkit-touch-callout: none) {
+  .ironlog .masthead { padding-top: calc(28px + env(safe-area-inset-top, 0px)); }
+  .ironlog .topbar { padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
+  .ironlog .session-sticky-bar { padding-top: env(safe-area-inset-top, 0px); }
+}
 .ironlog .timer-combo {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3523,7 +3529,7 @@ function App() {
                                 React.createElement("button", { className: "icon-btn danger", onClick: () => removeSet(currentDay.id, currentExercise.id, s.id) },
                                     React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row warmup-row", key: s.id },
                         React.createElement("div", { className: "plate-badge sm" }, `A${i + 1}`),
-                        React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
+                        React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
                         React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
                             React.createElement(IcoTrash, { size: 14 })))))),
@@ -3549,7 +3555,7 @@ function App() {
                                 React.createElement("button", { className: "icon-btn danger", onClick: () => removeSet(currentDay.id, currentExercise.id, s.id) },
                                     React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row", key: s.id },
                         React.createElement("div", { className: "plate-badge sm" }, i + 1),
-                        React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
+                        React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
                         React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
                             React.createElement(IcoTrash, { size: 14 })))))),
@@ -3739,7 +3745,7 @@ function App() {
                         const prTitle = isWeightPR ? `Nuovo record! Precedente: ${exBest.weight}kg` : isRepPR ? `Nuovo record! Stesso peso, più ripetizioni (prima: ${prevReps})` : "";
                         return (React.createElement("div", { className: "set-row" + (done ? " done" : "") + (s.warmup ? " warmup-row" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
                             React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, setLabels[i]),
-                            React.createElement("input", { className: "set-input", inputMode: "decimal", placeholder: "0", style: weightTrendColor ? { color: weightTrendColor, fontWeight: 700 } : undefined, value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
+                            React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", style: weightTrendColor ? { color: weightTrendColor, fontWeight: 700 } : undefined, value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
                             React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", style: repsTrendColor ? { color: repsTrendColor, fontWeight: 700 } : undefined, value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
                             React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => {
                                     const willBeDone = !c[s.id];
