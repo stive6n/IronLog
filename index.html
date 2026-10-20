@@ -3530,7 +3530,7 @@ function App() {
                                     React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row warmup-row", key: s.id },
                         React.createElement("div", { className: "plate-badge sm" }, `A${i + 1}`),
                         React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
-                        React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
+                        React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
                             React.createElement(IcoTrash, { size: 14 })))))),
                 warmupSets.length < MAX_WARMUP_SETS ? (React.createElement("button", { className: "add-trigger sm", onClick: () => addSet(currentDay.id, currentExercise.id, true) },
@@ -3556,7 +3556,7 @@ function App() {
                                     React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row", key: s.id },
                         React.createElement("div", { className: "plate-badge sm" }, i + 1),
                         React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
-                        React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
+                        React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
                             React.createElement(IcoTrash, { size: 14 })))))),
                 workingSets.length < MAX_SETS ? (React.createElement("button", { className: "add-trigger", onClick: () => addSet(currentDay.id, currentExercise.id, false) },
@@ -3746,7 +3746,7 @@ function App() {
                         return (React.createElement("div", { className: "set-row" + (done ? " done" : "") + (s.warmup ? " warmup-row" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
                             React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, setLabels[i]),
                             React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", style: weightTrendColor ? { color: weightTrendColor, fontWeight: 700 } : undefined, value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
-                            React.createElement("input", { className: "set-input", inputMode: "numeric", placeholder: "0", style: repsTrendColor ? { color: repsTrendColor, fontWeight: 700 } : undefined, value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
+                            React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", style: repsTrendColor ? { color: repsTrendColor, fontWeight: 700 } : undefined, value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
                             React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => {
                                     const willBeDone = !c[s.id];
                                     const next = Object.assign(Object.assign({}, c), { [s.id]: willBeDone });
