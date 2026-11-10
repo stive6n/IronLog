@@ -179,7 +179,7 @@ function SvgLineChart({data}){
   const vals=data.map(d=>d.weight),minV=Math.min(...vals),maxV=Math.max(...vals),range=maxV-minV||1;
   const px=i=>PL+(i/(data.length-1))*iW,py=v=>PT+iH-((v-minV)/range)*iH;
   const pts=data.map((d,i)=>`${px(i)},${py(d.weight)}`).join(' ');
-  const accent='#D9A53D',muted='#9A9088',border='#423B32';
+  const accent='var(--accent)',muted='var(--text-muted)',border='var(--border)';
   const yTicks=[minV,(minV+maxV)/2,maxV].map(v=>Math.round(v));
   return React.createElement('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,style:{display:'block',overflow:'visible'}},
     yTicks.map((v,i)=>[React.createElement('line',{key:'gl'+i,x1:PL,y1:py(v),x2:W-PR,y2:py(v),stroke:border,strokeDasharray:'3 3'}),React.createElement('text',{key:'yt'+i,x:PL-4,y:py(v)+4,textAnchor:'end',fontSize:9,fill:muted,fontFamily:'monospace'},v)]),
@@ -286,7 +286,7 @@ function sessionTopWeight(sets) {
     return max;
 }
 function emptyState() {
-    return { days: [], history: [], measurements: [], diet: emptyDiet(), theme: "gold", lastBackupAt: null, lastBackupSnoozeAt: null, userName: "", phraseMode: "default", customPhrases: [] };
+    return { days: [], history: [], measurements: [], diet: emptyDiet(), theme: "gold", mode: "dark", lastBackupAt: null, lastBackupSnoozeAt: null, userName: "", phraseMode: "default", customPhrases: [] };
 }
 // ── Modulo alimentazione ─────────────────────────────────────────────
 const WEEKDAYS = [
@@ -320,15 +320,23 @@ function emptyDiet() {
 }
 // ── Temi colore ──────────────────────────────────────────────────────
 const THEME_PRESETS = [
-    { id: "gold", label: "Chalk Gold", accent: "#E3A83B", accentInk: "#241A06", info: "#4F8FA6" },
-    { id: "red", label: "Iron Red", accent: "#E2472C", accentInk: "#2A0904", info: "#3FA68A" },
-    { id: "green", label: "Volt Green", accent: "#9FE436", accentInk: "#12210A", info: "#4A7FE4" },
-    { id: "blue", label: "Electric Blue", accent: "#3F9CE8", accentInk: "#041624", info: "#E8A23F" },
-    { id: "violet", label: "Neon Viola", accent: "#B36CE8", accentInk: "#1B0726", info: "#E8C13F" },
-    { id: "orange", label: "Rust Orange", accent: "#F2984A", accentInk: "#2B1300", info: "#4A90CE" },
-    { id: "dark", label: "Dark Mode", accent: "#E8A23F", accentInk: "#0D0D0D", info: "#4F8FA6" },
-    { id: "light", label: "Light Mode", accent: "#3F9CE8", accentInk: "#F5F5F5", info: "#E2472C" },
+    { id: "gold", label: "Chalk Gold", accent: "#E3A83B", accentInk: "#241A06", info: "#4F8FA6", accentLight: "#B87D12", accentInkLight: "#FFFFFF", infoLight: "#2F7F99" },
+    { id: "red", label: "Iron Red", accent: "#E2472C", accentInk: "#2A0904", info: "#3FA68A", accentLight: "#D63A1F", accentInkLight: "#FFFFFF", infoLight: "#1E8A6E" },
+    { id: "green", label: "Volt Green", accent: "#9FE436", accentInk: "#12210A", info: "#4A7FE4", accentLight: "#4E9A0A", accentInkLight: "#FFFFFF", infoLight: "#2F62C8" },
+    { id: "blue", label: "Electric Blue", accent: "#3F9CE8", accentInk: "#041624", info: "#E8A23F", accentLight: "#2563D8", accentInkLight: "#FFFFFF", infoLight: "#C97A12" },
+    { id: "violet", label: "Neon Viola", accent: "#B36CE8", accentInk: "#1B0726", info: "#E8C13F", accentLight: "#9440D4", accentInkLight: "#FFFFFF", infoLight: "#B8890A" },
+    { id: "orange", label: "Rust Orange", accent: "#F2984A", accentInk: "#2B1300", info: "#4A90CE", accentLight: "#D96A12", accentInkLight: "#FFFFFF", infoLight: "#2D74B5" },
+    { id: "mono", label: "Mono B/N", accent: "#E0E0E0", accentInk: "#0D0D0D", info: "#4A90E2", accentLight: "#1A1A1A", accentInkLight: "#F5F5F5", infoLight: "#2F6FC0" },
+    { id: "sky", label: "Sky Azzurro", accent: "#6CC8F5", accentInk: "#04202F", info: "#F0A04B", accentLight: "#1E9BE0", accentInkLight: "#FFFFFF", infoLight: "#E2472C" },
 ];
+// Migrazione: i vecchi temi "dark" / "light" diventano modalità + colore (Mono / Sky)
+function migrateTheme(parsed) {
+    const t = parsed && parsed.theme;
+    if (t === "dark") return { theme: "mono", mode: "dark" };
+    if (t === "light") return { theme: "sky", mode: "light" };
+    const known = THEME_PRESETS.some((p) => p.id === t);
+    return { theme: known ? t : "gold", mode: parsed && parsed.mode === "light" ? "light" : "dark" };
+}
 function getThemePreset(id) {
     return THEME_PRESETS.find((t) => t.id === id) || THEME_PRESETS[0];
 }
@@ -506,34 +514,25 @@ const CSS = `
   min-height: 100vh;
   width: 100%;
 }
-/* DARK THEME */
-.ironlog[data-theme="dark"] {
+/* DARK MODE + MONO: palette neutra nero/bianco */
+.ironlog[data-mode="dark"][data-theme="mono"] {
   --bg: #0D0D0D;
   --surface: #1A1A1A;
   --surface-2: #252525;
   --text: #E8E8E8;
   --text-muted: #999999;
-  --accent: #E0E0E0;
-  --accent-ink: #0D0D0D;
   --danger: #E74C3C;
-  --info: #4A90E2;
   --success: #5CB85C;
   --border: #333333;
-  --shadow-1: 0 2px 6px rgba(0,0,0,0.25);
-  --shadow-2: 0 3px 12px rgba(0,0,0,0.24);
-  --shadow-3: 0 10px 30px rgba(0,0,0,0.48);
 }
-/* LIGHT THEME */
-.ironlog[data-theme="light"] {
+/* LIGHT MODE: valida per tutti i colori accento */
+.ironlog[data-mode="light"] {
   --bg: #FFFFFF;
   --surface: #F1F1F4;
   --surface-2: #E4E4E9;
   --text: #1A1A1A;
   --text-muted: #666666;
-  --accent: #3F9CE8;
-  --accent-ink: #F5F5F5;
   --danger: #E74C3C;
-  --info: #E2472C;
   --success: #2FA84F;
   --border: #D5D5DC;
   --shadow-1: 0 2px 6px rgba(20,20,30,0.10);
@@ -1929,6 +1928,22 @@ const CSS = `
   flex-shrink: 0;
 }
 
+/* ── Esercizio monopodalico ───────────────────────────────────────── */
+.ironlog .uni-toggle {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 8px; cursor: pointer;
+  color: var(--text); font-family: var(--font-body); font-size: 14px; text-align: left;
+}
+.ironlog .uni-toggle.on { border-color: var(--accent); }
+.ironlog .uni-box {
+  width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: var(--bg); color: var(--accent-ink);
+}
+.ironlog .uni-toggle.on .uni-box { background: var(--accent); border-color: var(--accent); }
+.ironlog .set-row.uni .set-input, .ironlog .set-row-uni .set-input { padding-left: 2px; padding-right: 2px; }
+
 /* ── Selettore tema colore ────────────────────────────────────────── */
 .ironlog .theme-picker-wrap { position: relative; flex-shrink: 0; }
 .ironlog .theme-popover {
@@ -2080,7 +2095,7 @@ function App() {
                 ]);
                 if (dataRes && dataRes.value) {
                     const parsed = JSON.parse(dataRes.value);
-                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet ? Object.assign({ supplements: emptySupplements() }, parsed.diet) : emptyDiet(), theme: parsed.theme || "gold", lastBackupAt: parsed.lastBackupAt || null, lastBackupSnoozeAt: parsed.lastBackupSnoozeAt || null, userName: parsed.userName || "", phraseMode: parsed.phraseMode || "default", customPhrases: Array.isArray(parsed.customPhrases) ? parsed.customPhrases : [] });
+                    setAppState({ days: parsed.days || [], history: parsed.history || [], measurements: parsed.measurements || [], diet: parsed.diet ? Object.assign({ supplements: emptySupplements() }, parsed.diet) : emptyDiet(), theme: migrateTheme(parsed).theme, mode: migrateTheme(parsed).mode, lastBackupAt: parsed.lastBackupAt || null, lastBackupSnoozeAt: parsed.lastBackupSnoozeAt || null, userName: parsed.userName || "", phraseMode: parsed.phraseMode || "default", customPhrases: Array.isArray(parsed.customPhrases) ? parsed.customPhrases : [] });
                 }
                 if (navRes && navRes.value) {
                     const nav = JSON.parse(navRes.value);
@@ -2273,6 +2288,11 @@ function App() {
         }
         return () => clearInterval(restTimerRef.current);
     }, [restRunning, restStartedAt, restAccumulated]);
+    useEffect(() => {
+        const m = document.querySelector('meta[name="theme-color"]');
+        const th = appState.theme || "gold";
+        if (m) m.setAttribute("content", appState.mode === "light" ? "#FFFFFF" : (th === "mono" ? "#0D0D0D" : "#17140F"));
+    }, [appState.theme, appState.mode]);
     if (!loaded) {
         return (React.createElement("div", { className: "ironlog" },
             React.createElement("style", null, CSS),
@@ -2294,6 +2314,7 @@ function App() {
         persist(Object.assign(Object.assign({}, appState), { userName: name }));
     }
     const theme = appState.theme || "gold";
+    const mode = appState.mode === "light" ? "light" : "dark";
     const themePreset = getThemePreset(theme);
     const DAY_MS = 24 * 3600 * 1000;
     const daysSinceBackup = appState.lastBackupAt ? (Date.now() - new Date(appState.lastBackupAt).getTime()) / DAY_MS : Infinity;
@@ -2402,7 +2423,8 @@ function App() {
                     history: parsed.history,
                     measurements: Array.isArray(parsed.measurements) ? parsed.measurements : [],
                     diet: parsed.diet ? Object.assign({ supplements: emptySupplements() }, parsed.diet) : null,
-                    theme: parsed.theme || null,
+                    theme: parsed.theme ? migrateTheme(parsed).theme : null,
+                    mode: parsed.theme ? migrateTheme(parsed).mode : null,
                 });
             }
             catch (err) {
@@ -2426,6 +2448,7 @@ function App() {
                 measurements: importPreview.measurements,
                 diet: importPreview.diet || appState.diet,
                 theme: importPreview.theme || appState.theme,
+                mode: importPreview.mode || appState.mode,
             }));
         }
         else {
@@ -2647,9 +2670,16 @@ function App() {
                         const count = e.sets.filter((s) => !!s.warmup === !!warmup).length;
                         if (count >= (warmup ? MAX_WARMUP_SETS : MAX_SETS))
                             return e;
-                        return Object.assign(Object.assign({}, e), { sets: [...e.sets, { id: uid(), weight: "", reps: "", warmup: !!warmup }] });
+                        return Object.assign(Object.assign({}, e), { sets: [...e.sets, { id: uid(), weight: "", reps: "", repsR: "", warmup: !!warmup }] });
                     }) });
             }) }));
+    }
+    function setExerciseUnilateral(dId, exId, value) {
+        persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => d.id !== dId ? d : Object.assign(Object.assign({}, d), { exercises: d.exercises.map((e) => (e.id === exId ? Object.assign(Object.assign({}, e), { unilateral: !!value }) : e)) })) }));
+    }
+    function fmtSetReps(s, uni) {
+        if (!uni) return s.reps || "\u2014";
+        return `${s.reps || "\u2014"} SX \u00B7 ${s.repsR || "\u2014"} DX`;
     }
     function updateSetField(dId, exId, setId, field, value) {
         persist(Object.assign(Object.assign({}, appState), { days: days.map((d) => {
@@ -2850,6 +2880,9 @@ function App() {
     function setThemeChoice(id) {
         persist(Object.assign(Object.assign({}, appState), { theme: id }));
     }
+    function setModeChoice(m) {
+        persist(Object.assign(Object.assign({}, appState), { mode: m }));
+    }
     // ── Personalizzazione: pagina tema + frasi di benvenuto ──────────
     function openPersonalizzazione() {
         setAddingPhrase(false);
@@ -2919,6 +2952,11 @@ function App() {
                 const r = parseFloat(String(s.reps).replace(",", "."));
                 if (!isNaN(w) && !isNaN(r))
                     totalVolume += w * r;
+                if (e.unilateral && !s.warmup) {
+                    const rR = parseFloat(String(s.repsR).replace(",", "."));
+                    if (!isNaN(w) && !isNaN(rR))
+                        totalVolume += w * rR;
+                }
             });
             const top = sessionTopWeight(e.sets);
             const prevBest = bestMapBefore[e.id];
@@ -2935,7 +2973,8 @@ function App() {
             exercises: currentDay.exercises.map((e) => ({
                 id: e.id,
                 name: e.name,
-                sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, warmup: !!s.warmup })),
+                unilateral: !!e.unilateral,
+                sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, repsR: s.repsR || "", warmup: !!s.warmup })),
                 note: sessionNotes[e.id] || "",
             })),
         };
@@ -2973,7 +3012,8 @@ function App() {
                 exercises: sDay.exercises.map((e) => ({
                     id: e.id,
                     name: e.name,
-                    sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, warmup: !!s.warmup })),
+                    unilateral: !!e.unilateral,
+                    sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, repsR: s.repsR || "", warmup: !!s.warmup })),
                     note: sessionNotes[e.id] || "",
                 })),
             };
@@ -3468,7 +3508,7 @@ function App() {
                         React.createElement("span", null,
                             s.weight || "—",
                             " kg \u00D7 ",
-                            s.reps || "—",
+                            fmtSetReps(s, !!currentExercise.unilateral),
                             " rip")))))) : (React.createElement("div", { className: "compare-card" },
                     React.createElement("div", { className: "compare-head" },
                         React.createElement("span", { className: "lbl" }, "Ultima volta")),
@@ -3537,11 +3577,15 @@ function App() {
                     React.createElement(IcoPlus, { size: 16 }),
                     " Aggiungi avvicinamento")) : (React.createElement("div", { className: "limit-note" }, "Hai raggiunto il massimo di 4 serie di avvicinamento.")),
                 React.createElement("div", { className: "section-label" }, "Serie"),
+                React.createElement("button", { className: "uni-toggle" + (currentExercise.unilateral ? " on" : ""), onClick: () => setExerciseUnilateral(currentDay.id, currentExercise.id, !currentExercise.unilateral) },
+                    React.createElement("span", { className: "uni-box" }, currentExercise.unilateral && React.createElement(IcoCheck, { size: 13 })),
+                    "Esercizio monopodalico"),
                 React.createElement("div", { className: "sets-table" },
-                    workingSets.length > 0 && (React.createElement("div", { className: "set-header" },
+                    workingSets.length > 0 && (React.createElement("div", { className: "set-header", style: currentExercise.unilateral ? { gridTemplateColumns: "36px 1fr 1fr 1fr 32px" } : undefined },
                         React.createElement("span", null, "#"),
                         React.createElement("span", null, "Peso (kg)"),
-                        React.createElement("span", null, "Ripetizioni"),
+                        currentExercise.unilateral ? React.createElement("span", { style: { textAlign: "center" } }, "SX") : React.createElement("span", null, "Ripetizioni"),
+                        currentExercise.unilateral ? React.createElement("span", { style: { textAlign: "center" } }, "DX") : null,
                         React.createElement("span", null))),
                     workingSets.map((s, i) => confirmDeleteSet === s.id ? (React.createElement("div", { className: "row-card", key: s.id },
                         React.createElement("div", { className: "confirm-row" },
@@ -3553,10 +3597,11 @@ function App() {
                                 React.createElement("button", { className: "icon-btn", onClick: () => setConfirmDeleteSet(null) },
                                     React.createElement(IcoX, { size: 16 })),
                                 React.createElement("button", { className: "icon-btn danger", onClick: () => removeSet(currentDay.id, currentExercise.id, s.id) },
-                                    React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row", key: s.id },
+                                    React.createElement(IcoCheck, { size: 16 })))))) : (React.createElement("div", { className: "set-row" + (currentExercise.unilateral ? " uni" : ""), key: s.id, style: currentExercise.unilateral ? { gridTemplateColumns: "36px 1fr 1fr 1fr 32px" } : undefined },
                         React.createElement("div", { className: "plate-badge sm" }, i + 1),
                         React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.weight, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "weight", e.target.value) }),
-                        React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
+                        React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: currentExercise.unilateral ? "SX" : "0", value: s.reps, onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "reps", e.target.value) }),
+                        currentExercise.unilateral ? React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "DX", value: s.repsR || "", onChange: (e) => updateSetField(currentDay.id, currentExercise.id, s.id, "repsR", e.target.value) }) : null,
                         React.createElement("button", { className: "icon-btn danger", onClick: () => setConfirmDeleteSet(s.id) },
                             React.createElement(IcoTrash, { size: 14 })))))),
                 workingSets.length < MAX_SETS ? (React.createElement("button", { className: "add-trigger", onClick: () => addSet(currentDay.id, currentExercise.id, false) },
@@ -3703,17 +3748,18 @@ function App() {
                         "Ultima volta (",
                         formatDate(prev.date),
                         "): ",
-                        prev.sets.map((s, i) => `S${i + 1} ${s.weight || "—"}kg×${s.reps || "—"}`).join("  ·  "))),
+                        prev.sets.map((s, i) => `S${i + 1} ${s.weight || "—"}kg×${ex.unilateral ? `${s.reps || "—"}SX/${s.repsR || "—"}DX` : (s.reps || "—")}`).join("  ·  "))),
                     prev && prev.note ? (React.createElement("div", { className: "note-card prev-note" },
                         React.createElement("div", { className: "note-card-label" },
                             "Nota sessione precedente \u00B7 ",
                             formatDate(prev.date)),
                         prev.note)) : null)),
                 React.createElement("div", { className: "sets-table" },
-                    ex.sets.length > 0 && (React.createElement("div", { className: "set-header", style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
+                    ex.sets.length > 0 && (React.createElement("div", { className: "set-header", style: { gridTemplateColumns: ex.unilateral ? "36px 1fr 1fr 1fr 32px 32px" : "36px 1fr 1fr 32px 32px" } },
                         React.createElement("span", null, "#"),
                         React.createElement("span", null, "Peso (kg)"),
-                        React.createElement("span", null, "Rip"),
+                        ex.unilateral ? React.createElement("span", { style: { textAlign: "center" } }, "SX") : React.createElement("span", null, "Rip"),
+                        ex.unilateral ? React.createElement("span", { style: { textAlign: "center" } }, "DX") : null,
                         React.createElement("span", null),
                         React.createElement("span", null))),
                     orderedSets.map((s, i) => {
@@ -3739,14 +3785,20 @@ function App() {
                         };
                         const weightTrendColor = trendColor(curW, prevW, prev2W);
                         const repsTrendColor = trendColor(curReps, prevReps, prev2Reps);
+                        const uniRow = !!ex.unilateral && !s.warmup;
+                        const curRepsR = parseFloat(String(s.repsR).replace(",", "."));
+                        const prevRepsR = prevSet ? parseFloat(String(prevSet.repsR).replace(",", ".")) : NaN;
+                        const prev2RepsR = prev2Set ? parseFloat(String(prev2Set.repsR).replace(",", ".")) : NaN;
+                        const repsRTrendColor = trendColor(curRepsR, prevRepsR, prev2RepsR);
                         const isWeightPR = !s.warmup && exBest && !isNaN(curW) && curW > exBest.weight;
                         const isRepPR = !s.warmup && !isWeightPR && prevSet && !isNaN(curW) && !isNaN(prevW) && curW === prevW && !isNaN(curReps) && !isNaN(prevReps) && curReps > prevReps;
                         const isPR = isWeightPR || isRepPR;
                         const prTitle = isWeightPR ? `Nuovo record! Precedente: ${exBest.weight}kg` : isRepPR ? `Nuovo record! Stesso peso, più ripetizioni (prima: ${prevReps})` : "";
-                        return (React.createElement("div", { className: "set-row" + (done ? " done" : "") + (s.warmup ? " warmup-row" : ""), key: s.id, style: { gridTemplateColumns: "36px 1fr 1fr 32px 32px" } },
+                        return (React.createElement("div", { className: "set-row" + (done ? " done" : "") + (s.warmup ? " warmup-row" : ""), key: s.id, style: { gridTemplateColumns: ex.unilateral ? "36px 1fr 1fr 1fr 32px 32px" : "36px 1fr 1fr 32px 32px" } },
                             React.createElement("div", { className: "plate-badge sm" + (done ? " filled" : "") }, setLabels[i]),
                             React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", style: weightTrendColor ? { color: weightTrendColor, fontWeight: 700 } : undefined, value: s.weight, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "weight", e.target.value) }),
-                            React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "0", style: repsTrendColor ? { color: repsTrendColor, fontWeight: 700 } : undefined, value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
+                            React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: uniRow ? "SX" : "0", style: Object.assign({}, repsTrendColor ? { color: repsTrendColor, fontWeight: 700 } : {}, (ex.unilateral && s.warmup) ? { gridColumn: "span 2" } : {}), value: s.reps, onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "reps", e.target.value) }),
+                            uniRow ? React.createElement("input", { className: "set-input", inputMode: "text", autoCapitalize: "off", autoCorrect: "off", spellCheck: false, placeholder: "DX", style: repsRTrendColor ? { color: repsRTrendColor, fontWeight: 700 } : undefined, value: s.repsR || "", onChange: (e) => updateSetField(currentDay.id, ex.id, s.id, "repsR", e.target.value) }) : null,
                             React.createElement("button", { className: "set-check" + (done ? " done" : ""), onClick: () => setSessionChecked(c => {
                                     const willBeDone = !c[s.id];
                                     const next = Object.assign(Object.assign({}, c), { [s.id]: willBeDone });
@@ -3814,15 +3866,17 @@ function App() {
             React.createElement("div", { className: "content" },
                 React.createElement("div", { className: "section-label" }, "Serie"),
                 React.createElement("div", { className: "sets-table" },
-                    ex.sets.length > 0 && (React.createElement("div", { className: "set-header" },
+                    ex.sets.length > 0 && (React.createElement("div", { className: "set-header", style: ex.unilateral ? { gridTemplateColumns: "36px 1fr 1fr 1fr 32px" } : undefined },
                         React.createElement("span", null, "#"),
                         React.createElement("span", null, "Peso (kg)"),
-                        React.createElement("span", null, "Ripetizioni"),
+                        ex.unilateral ? React.createElement("span", { style: { textAlign: "center" } }, "SX") : React.createElement("span", null, "Ripetizioni"),
+                        ex.unilateral ? React.createElement("span", { style: { textAlign: "center" } }, "DX") : null,
                         React.createElement("span", null))),
-                    ex.sets.map((s, i) => (React.createElement("div", { className: "set-row", key: i },
+                    ex.sets.map((s, i) => (React.createElement("div", { className: "set-row", key: i, style: ex.unilateral ? { gridTemplateColumns: "36px 1fr 1fr 1fr 32px" } : undefined },
                         React.createElement("div", { className: "plate-badge sm" }, i + 1),
                         React.createElement("div", { className: "set-input", style: { background: "transparent", border: "none" } }, s.weight || "—"),
-                        React.createElement("div", { className: "set-input", style: { background: "transparent", border: "none" } }, s.reps || "—"),
+                        React.createElement("div", { className: "set-input", style: Object.assign({ background: "transparent", border: "none" }, (ex.unilateral && s.warmup) ? { gridColumn: "span 2" } : {}) }, s.reps || "—"),
+                        (ex.unilateral && !s.warmup) ? React.createElement("div", { className: "set-input", style: { background: "transparent", border: "none" } }, s.repsR || "—") : null,
                         React.createElement("span", null))))),
                 React.createElement("div", { className: "section-label" }, "Note personali"),
                 ex.note ? React.createElement("div", { className: "note-readout" }, ex.note) : React.createElement("div", { className: "note-readout muted" }, "Nessuna nota per questo esercizio."))));
@@ -4107,9 +4161,13 @@ function App() {
         return (React.createElement(React.Fragment, null,
             React.createElement(Header, { title: "Personalizzazione", onBack: () => goHome() }),
             React.createElement("div", { className: "content" },
-                React.createElement("div", { className: "section-label" }, "Colore accento"),
+                React.createElement("div", { className: "section-label" }, "Modalit\u00E0"),
+                React.createElement("div", { className: "tab-row" },
+                    React.createElement("button", { className: "tab-btn" + (mode === "dark" ? " active" : ""), onClick: () => setModeChoice("dark") }, "Dark mode"),
+                    React.createElement("button", { className: "tab-btn" + (mode === "light" ? " active" : ""), onClick: () => setModeChoice("light") }, "Light mode")),
+                React.createElement("div", { className: "section-label", style: { marginTop: 24 } }, "Colore accento"),
                 React.createElement("div", { className: "theme-swatch-grid" }, THEME_PRESETS.map((t) => React.createElement("button", { key: t.id, className: "theme-swatch" + (theme === t.id ? " active" : ""), onClick: () => setThemeChoice(t.id) },
-                    React.createElement("span", { className: "theme-swatch-dot", style: { background: t.accent } }),
+                    React.createElement("span", { className: "theme-swatch-dot", style: { background: mode === "light" ? t.accentLight : t.accent } }),
                     React.createElement("span", { className: "theme-swatch-label" }, t.label)))),
                 React.createElement("div", { className: "section-label", style: { marginTop: 24 } }, "Frase di benvenuto"),
                 React.createElement("div", { className: "tab-row" },
@@ -4183,11 +4241,10 @@ function App() {
     }
     const animDir = animDirCacheRef.current.dir;
     const themeVars = () => {
-        if (theme === "dark") return { "--bg": "#0D0D0D", "--surface": "#1A1A1A", "--surface-2": "#252525", "--text": "#E8E8E8", "--text-muted": "#999999", "--accent": "#E0E0E0", "--accent-ink": "#0D0D0D", "--danger": "#E74C3C", "--info": "#4A90E2", "--border": "#333333" };
-        if (theme === "light") return { "--bg": "#FFFFFF", "--surface": "#F1F1F4", "--surface-2": "#E4E4E9", "--text": "#1A1A1A", "--text-muted": "#666666", "--accent": "#3F9CE8", "--accent-ink": "#F5F5F5", "--danger": "#E74C3C", "--info": "#E2472C", "--border": "#D5D5DC" };
+        if (mode === "light") return { "--accent": themePreset.accentLight, "--accent-ink": themePreset.accentInkLight, "--info": themePreset.infoLight };
         return { "--accent": themePreset.accent, "--accent-ink": themePreset.accentInk, "--info": themePreset.info };
     };
-    return (React.createElement("div", { className: "ironlog", "data-theme": theme, style: themeVars() },
+    return (React.createElement("div", { className: "ironlog", "data-theme": theme, "data-mode": mode, style: themeVars() },
         React.createElement("style", null, CSS),
         React.createElement("div", { className: "shell" + (welcomePhase === "shown" ? " blurred" : "") },
             React.createElement("div", { className: "screen-anim" + (animDir === "back" ? " back" : ""), key: animKey }, body),
